@@ -17,6 +17,7 @@ Library
                      , GCLParser.GCLDatatype
                      , GCLParser.PrettyPrint
                      , GCLInterpreter
+                     , ProgramPath
                      , MuGCL
                      , GCLUtils
                      , GCLLexer.Token
