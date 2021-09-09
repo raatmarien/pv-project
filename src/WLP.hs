@@ -1,58 +1,71 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# LANGUAGE TupleSections #-}
 
 module WLP
 
 where
 
+import Control.Monad
+import Control.Monad.Trans.State
 
+import Data.Functor
+import Data.Bifunctor
 import Data.SBV
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 import ProgramPath
 import GCLParser.GCLDatatype
 
 
 type Env = Map.Map String SInteger
+type Free = Set.Set String
 
 
-wlpPath :: ProgramPath -> Env -> (SBool, Env)
-wlpPath p e = foldr (uncurry . wlp) (sTrue, e) p
+return2 :: (Monad m, Monad n) => a -> m (n a)
+return2 = return . return
 
 
-wlp :: Stmt -> SBool -> Env -> (SBool, Env)
-wlp Skip r e = (r, e)
-wlp (Assert x) r e = (cond .&& r, e')
-    where (cond, e') = symbolizeB x e
-wlp (Assume x) r e = (cond .=> r, e')
-    where (cond, e') = symbolizeB x e
+fmap2 :: (Monad m, Monad n) => (a -> b) -> m (n a) -> m (n b)
+fmap2 = (<$>) . (<$>)
 
 
-symbolizeB :: Expr -> Env -> (SBool, Env)
-symbolizeB (LitB x) e = (literal x, e)
-symbolizeB (BinopExpr LessThan x y) e = (lhs .< rhs, e'')
-    where (lhs, e') = symbolizeE x e
-          (rhs, e'') = symbolizeE y e'
-symbolizeB (BinopExpr Equal x y) e = (lhs .== rhs, e'')
-    where (lhs, e') = symbolizeE x e
-          (rhs, e'') = symbolizeE y e'
+ap2 :: (Monad m, Monad n) => m (n (a -> b)) -> m (n a) -> m (n b)
+ap2 = ap . (ap <$>)
 
 
--- change to
--- symbolizeE :: Expr -> ([String], Env -> (SInteger, Env))
--- and pass up the free variables through [String]
--- and automatically fill these in in the Map.fromList for env
-symbolizeE :: Expr -> Env -> (SInteger, Env)
-symbolizeE (LitI x) e = (literal $ fromIntegral x, e)
-symbolizeE (Var v) e = (e Map.! v, e)
+wlpPath :: ProgramPath -> ([State (SBool, Env) ()], Free)
+wlpPath p = runState (mapM wlp p) Set.empty
+
+
+twist :: (SBool -> SBool -> SBool) -> State Env SBool -> State (SBool, Env) ()
+twist op s = modify $ \(rhs, env) -> first (`op` rhs) (runState s env)
+
+
+wlp :: Stmt -> State Free (State (SBool, Env) ())
+wlp Skip = return2 ()
+wlp (Assert x) = twist (.&&) <$> symbolizeB x
+wlp (Assume x) = twist (.=>) <$> symbolizeB x
+
+
+symbolizeB :: Expr -> State Free (State Env SBool)
+symbolizeB (LitB x) = return2 $ literal x
+symbolizeB (BinopExpr LessThan x y) = fmap2 (.<) (symbolizeE x) `ap2` symbolizeE y
+symbolizeB (BinopExpr Equal x y) = fmap2 (.==) (symbolizeE x) `ap2` symbolizeE y
+
+
+symbolizeE :: Expr -> State Free (State Env SInteger)
+symbolizeE (LitI x) = return2 $ fromIntegral x
+symbolizeE (Var v) = modify (Set.insert v) >> return (get <&> (Map.! v))
 
 
 test :: IO ()
 test = do
-    let path = [Assume (opLessThan (LitI 1) (Var "x")), Assert (opLessThan (LitI 1) (Var "x"))]
+    let path = [Assume (opLessThan (Var "x") (Var "y")), Assume (opLessThan (Var "y") (LitI 3)), Assert (opLessThan (Var "x") (LitI 1))]
 
-    let env = Map.fromList [("x", sInteger "x")]:: Map.Map String (Symbolic SInteger)
-    let envS = sequence env:: Symbolic (Map.Map String SInteger)
-        
-    let wp = fst . wlpPath path <$> envS:: Symbolic SBool
+    let (wpS, fv) = wlpPath path
+    let env = sequence $ Map.fromList $ map (\v -> (v, sInteger v)) $ Set.toAscList fv
+
+    let wp = fst . (\e -> foldr execState (sTrue, e) wpS) <$> env
 
     prove wp >>= print

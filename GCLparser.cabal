@@ -31,6 +31,7 @@ Library
                      , optparse-applicative
                      , pretty
                      , sbv
+                     , transformers
   hs-source-dirs:      src
   build-tools:         happy, alex
   default-language:    Haskell2010
