@@ -11,7 +11,7 @@ instance Arbitrary Stmt where
     return Skip,
     Assert <$> arbitrary,
     Assume <$> arbitrary,
-    Assign <$> arbitrary <*> arbitrary,
+    Assign "var" <$> arbitrary,
     Seq <$> arbitrary <*> arbitrary,
     IfThenElse <$> arbitrary <*> arbitrary <*> arbitrary,
     While <$> arbitrary <*> arbitrary,
@@ -28,5 +28,24 @@ testZeroK = QC.testProperty "test that k=0 always returns no paths if the statem
             $ \stmt -> stmt /= Skip
                        QC.==> (generateProgramPaths 0 stmt == [])
 
+testNotTooLong = QC.testProperty "test that it doesn't generate too long paths"
+                 $ \stmt -> do
+                   k <- choose (0, 8)
+                   return $ all (\x -> length x <= k)
+                     $ generateProgramPaths k stmt
 
-programPathTests = testGroup "Program path tests" [testSkipPaths, testZeroK]
+testCombinesIfThenElse = QC.testProperty "test that as many program paths are generated for if then else as for both branches added together"
+                         $ \s1 s2 -> do
+                           k <- choose (1, 4)
+                           let p1 = generateProgramPaths (k-1) s1
+                               p2 = generateProgramPaths (k-1) s2
+                               pt = generateProgramPaths k
+                                    $ IfThenElse (LitB True) s1 s2
+                           return $ length pt == (length p1) + (length p2)
+
+programPathTests = testGroup "Program path tests" [
+  testSkipPaths,
+  testZeroK,
+  testNotTooLong,
+  testCombinesIfThenElse
+  ]
