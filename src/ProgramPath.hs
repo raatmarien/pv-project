@@ -21,7 +21,7 @@ type ProgramPath = [BasicStmt]
 -- included. When no paths of the length reach the end, this may return
 -- an empty list.
 generateProgramPaths :: Int -> Stmt -> [ProgramPath]
-generateProgramPaths 0 Skip = [[]]
+generateProgramPaths _ Skip = [[]]
 generateProgramPaths 0 _ = [] -- Oops, we can't reach the end
 generateProgramPaths k (Seq s1 s2)
   = [ p1 ++ p2
