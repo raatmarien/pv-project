@@ -30,6 +30,7 @@ Library
                      , containers
                      , optparse-applicative
                      , pretty
+                     , libBF >= 0.6.2
                      , sbv
                      , transformers
   hs-source-dirs:      src
