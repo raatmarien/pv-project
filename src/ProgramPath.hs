@@ -23,11 +23,11 @@ type ProgramPath = [BasicStmt]
 generateProgramPaths :: Int -> Stmt -> [ProgramPath]
 generateProgramPaths _ Skip = [[]]
 generateProgramPaths k (Block _ s) = generateProgramPaths k s
-generateProgramPaths 0 _ = [] -- Oops, we can't reach the end
 generateProgramPaths k (Seq s1 s2)
   = [ p1 ++ p2
-    | p1 <- generateProgramPaths (k-1) s1
+    | p1 <- generateProgramPaths k s1
     , p2 <- generateProgramPaths (k - (length p1)) s2]
+generateProgramPaths 0 _ = [] -- Oops, we can't reach the end
 generateProgramPaths k (IfThenElse e s1 s2)
   = let ifCase = map ((BAssume e):) $ generateProgramPaths (k-1) s1
         elseCase = map ((BAssume $ OpNeg e):)
