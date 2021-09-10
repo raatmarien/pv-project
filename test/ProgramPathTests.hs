@@ -64,11 +64,18 @@ testSeqMakesCartesianProduct = QC.testProperty "test that seq creates all combin
                                  return $ length pt == (length p1) * (length p2)
                                  
 
+testWhileContainsEndCase = QC.testProperty "test that while contains the end case"
+                           $ \s -> do
+                             k <- choose (1, 8)
+                             let p = generateProgramPaths k $ While true s
+                             return $ [BAssume $ OpNeg true] `elem` p
+
 programPathTests = testGroup "Program path tests" [
   testSkipPaths,
   testZeroK,
   testNotTooLong,
   testCombinesIfThenElse,
   testIgnoresBlocks,
-  testSeqMakesCartesianProduct
+  testSeqMakesCartesianProduct,
+  testWhileContainsEndCase
   ]
