@@ -2,11 +2,11 @@ module ProgramPathTests where
 
 import ProgramPath
 import GCLParser.GCLDatatype
-import Test.HUnit
+import Test.Tasty
+import Test.Tasty.HUnit
+import Test.Tasty.QuickCheck as QC
 
-testSkipPaths = "test that skip creates valid paths" ~: TestList [
-  [[]] ~=? generateProgramPaths 0 Skip,
-  [[]] ~=? generateProgramPaths 43 Skip
-  ]
+testSkipPaths = QC.testProperty "test that skip creates valid paths"
+                $ \k -> generateProgramPaths k Skip == [[]]
 
-programPathTests = TestList [testSkipPaths]
+programPathTests = testGroup "Program path tests" [testSkipPaths]

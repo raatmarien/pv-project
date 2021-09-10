@@ -1,4 +1,6 @@
 import ProgramPathTests
-import Test.HUnit
+import Test.Tasty
 
-main = runTestTT programPathTests
+main = defaultMain tests
+
+tests = testGroup "Tests" [programPathTests]
