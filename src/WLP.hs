@@ -42,10 +42,9 @@ twist :: (SBool -> SBool -> SBool) -> State Env SBool -> State (SBool, Env) ()
 twist op s = modify $ \(rhs, env) -> first (`op` rhs) (runState s env)
 
 
-wlp :: Stmt -> State Free (State (SBool, Env) ())
-wlp Skip = return2 ()
-wlp (Assert x) = twist (.&&) <$> symbolizeB x
-wlp (Assume x) = twist (.=>) <$> symbolizeB x
+wlp :: BasicStmt -> State Free (State (SBool, Env) ())
+wlp (BAssert x) = twist (.&&) <$> symbolizeB x
+wlp (BAssume x) = twist (.=>) <$> symbolizeB x
 
 
 symbolizeB :: Expr -> State Free (State Env SBool)
@@ -61,7 +60,7 @@ symbolizeE (Var v) = modify (Set.insert v) >> return (get <&> (Map.! v))
 
 test :: IO ()
 test = do
-    let path = [Assume (opLessThan (Var "x") (Var "y")), Assume (opLessThan (Var "y") (LitI 3)), Assert (opLessThan (Var "x") (LitI 1))]
+    let path = [BAssume (opLessThan (Var "x") (Var "y")), BAssume (opLessThan (Var "y") (LitI 3)), BAssert (opLessThan (Var "x") (LitI 1))]
 
     let (wpS, fv) = wlpPath path
     let env = sequence $ Map.fromList $ map (\v -> (v, sInteger v)) $ Set.toAscList fv
