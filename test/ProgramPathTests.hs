@@ -31,6 +31,7 @@ testZeroK = QC.testProperty "test that k=0 always returns no paths if the statem
                        QC.==> (generateProgramPaths 0 stmt == [])
   where isSkip (Block _ s) = isSkip s
         isSkip Skip        = True
+        isSkip (Seq s1 s2) = isSkip s1 && isSkip s2
         isSkip _           = False
 
 testNotTooLong = QC.testProperty "test that it doesn't generate too long paths"
