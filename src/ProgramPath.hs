@@ -22,6 +22,7 @@ type ProgramPath = [BasicStmt]
 -- an empty list.
 generateProgramPaths :: Int -> Stmt -> [ProgramPath]
 generateProgramPaths _ Skip = [[]]
+generateProgramPaths k (Block _ s) = generateProgramPaths k s
 generateProgramPaths 0 _ = [] -- Oops, we can't reach the end
 generateProgramPaths k (Seq s1 s2)
   = [ p1 ++ p2
@@ -37,7 +38,6 @@ generateProgramPaths k w@(While e s)
                    $ generateProgramPaths (k-1) (Seq s w)
         endCase  = [[BAssume $ OpNeg e]]
     in loopCase ++ endCase
-generateProgramPaths k (Block _ s) = generateProgramPaths k s
 generateProgramPaths _ stmt = [[toBasicStmt stmt]]
 
 toBasicStmt :: Stmt -> BasicStmt
