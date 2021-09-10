@@ -21,6 +21,8 @@ instance Arbitrary Expr where
   -- We don't need complicated expressions for these tests
   arbitrary = return $ LitB True
 
+true = LitB True
+
 testSkipPaths = QC.testProperty "test that skip creates valid paths"
                 $ \k -> generateProgramPaths k Skip == [[]]
 
@@ -52,10 +54,21 @@ testIgnoresBlocks = QC.testProperty "test that blocks are ignored" $
                       return $ generateProgramPaths k s
                         == generateProgramPaths k (Block [] s)
 
+testSeqMakesCartesianProduct = QC.testProperty "test that seq creates all combinations"
+                               $ \s2 -> do
+                                 k <- choose (0, 8)
+                                 let s1 = IfThenElse true (Assume true) (Assert true)
+                                     p1 = generateProgramPaths 2 s1
+                                     p2 = generateProgramPaths k s2
+                                     pt = generateProgramPaths (k+2) $ Seq s1 s2
+                                 return $ length pt == (length p1) * (length p2)
+                                 
+
 programPathTests = testGroup "Program path tests" [
   testSkipPaths,
   testZeroK,
   testNotTooLong,
   testCombinesIfThenElse,
-  testIgnoresBlocks
+  testIgnoresBlocks,
+  testSeqMakesCartesianProduct
   ]
