@@ -37,11 +37,10 @@ wlpPath p = (fv, b)
           b = foldr ($) (const sTrue) fs
 
 
-wlp :: Stmt -> State Free (EBool -> EBool)
-wlp Skip = return id
-wlp (Assert x) = state $ \fv -> let (sx, fv') = symbolizeB x fv in (\post e -> sx e .&& post e, fv')
-wlp (Assume x) = state $ \fv -> let (sx, fv') = symbolizeB x fv in (\post e -> sx e .=> post e, fv')
-wlp (Assign v x) = state $ \fv -> let (sx, fv') = symbolizeE x fv in (\post e -> post (Map.insert v (sx e) e), fv')
+wlp :: BasicStmt -> State Free (EBool -> EBool)
+wlp (BAssert x) = state $ \fv -> let (sx, fv') = symbolizeB x fv in (\post e -> sx e .&& post e, fv')
+wlp (BAssume x) = state $ \fv -> let (sx, fv') = symbolizeB x fv in (\post e -> sx e .=> post e, fv')
+wlp (BAssign v x) = state $ \fv -> let (sx, fv') = symbolizeE x fv in (\post e -> post (Map.insert v (sx e) e), fv')
 
 
 symbolizeB :: Expr -> Free -> (EBool, Free)
@@ -61,7 +60,7 @@ test :: IO ()
 test = do
     --let path = [Assume (opLessThan (Var "x") (Var "y")), Assume (opLessThan (Var "y") (LitI 3)), Assert (opLessThan (Var "x") (LitI 1))]
     --let rhoE4 = [Assume (opLessThan (LitI 1) (Var "x")), Assume (OpNeg $ opLessThan (LitI 0) (Var "x")), Assign "y" (Var "x"), Assert (opEqual (Var "y") (LitI 1))]
-    let notTest = [Assume (opLessThan (LitI 1) (Var "x")), Assume (OpNeg $ opLessThan (LitI 2) (Var "x")), Assign "y" (Var "x"), Assert (opEqual (Var "y") (LitI 2))]
+    let notTest = [BAssume (opLessThan (LitI 1) (Var "x")), BAssume (OpNeg $ opLessThan (LitI 2) (Var "x")), BAssign "y" (Var "x"), BAssert (opEqual (Var "y") (LitI 2))]
 
     let (fv, wpe) = wlpPath notTest
     let env = sequence $ Map.fromList $ map (\v -> (v, sInteger v)) $ Set.toAscList fv

@@ -39,3 +39,14 @@ Library
   GHC-Options:         -Wall
   default-extensions:  TupleSections
                      , NamedFieldPuns
+
+Test-Suite test-verifier
+  type:               exitcode-stdio-1.0
+  main-is:            Main.hs
+  hs-source-dirs:     test
+  other-modules:      ProgramPathTests
+  build-depends:        base >= 4.10
+                      , GCLparser
+                      , tasty
+                      , tasty-hunit
+                      , tasty-quickcheck
