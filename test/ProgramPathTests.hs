@@ -25,8 +25,11 @@ testSkipPaths = QC.testProperty "test that skip creates valid paths"
                 $ \k -> generateProgramPaths k Skip == [[]]
 
 testZeroK = QC.testProperty "test that k=0 always returns no paths if the statement is not Skip"
-            $ \stmt -> stmt /= Skip
+            $ \stmt -> (not $ isSkip stmt)
                        QC.==> (generateProgramPaths 0 stmt == [])
+  where isSkip (Block _ s) = isSkip s
+        isSkip Skip        = True
+        isSkip _           = False
 
 testNotTooLong = QC.testProperty "test that it doesn't generate too long paths"
                  $ \stmt -> do
@@ -43,9 +46,16 @@ testCombinesIfThenElse = QC.testProperty "test that as many program paths are ge
                                     $ IfThenElse (LitB True) s1 s2
                            return $ length pt == (length p1) + (length p2)
 
+testIgnoresBlocks = QC.testProperty "test that blocks are ignored" $
+                    \s -> do
+                      k <- choose (0, 5)
+                      return $ generateProgramPaths k s
+                        == generateProgramPaths k (Block [] s)
+
 programPathTests = testGroup "Program path tests" [
   testSkipPaths,
   testZeroK,
   testNotTooLong,
-  testCombinesIfThenElse
+  testCombinesIfThenElse,
+  testIgnoresBlocks
   ]
