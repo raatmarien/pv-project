@@ -1,70 +1,98 @@
+{-# OPTIONS_GHC -Wno-unused-matches #-}
 module WLP
 
 where
 
---import Control.Monad
-import Control.Monad.Trans.State
 
-import Data.SBV
-import qualified Data.Map as Map
-import qualified Data.Set as Set
+import Control.Monad
+import Control.Monad.IO.Class
+
+import Data.Map
+
+import Z3.Monad
+
 
 import ProgramPath
+
 import GCLParser.GCLDatatype
 
 
-type Env = Map.Map String SInteger
-type EBool = Env -> SBool
-type EInt = Env -> SInteger
-type Free = Set.Set String
+type Env = Map String AST
 
-{-
-return2 :: (Monad m, Monad n) => a -> m (n a)
-return2 = return . return
+validate :: ProgramPath -> IO ()
+validate p = evalZ3 $ do
+    wlp <- wlpPath p empty
 
+    assert wlp
+    res <- check
 
-fmap2 :: (Monad m, Monad n) => (a -> b) -> m (n a) -> m (n b)
-fmap2 = (<$>) . (<$>)
+    liftIO . putStrLn =<< astToString wlp
+    liftIO $ print res
 
+wlpPath :: ProgramPath -> Env -> Z3 AST
+wlpPath [] _       = mkTrue
+wlpPath (x:xs) env = do
+    let (wlpX, z3env') = wlpOne x env
+    env' <- z3env'
+    rhs <- wlpPath xs env'
+    wlpX rhs
 
-ap2 :: (Monad m, Monad n) => m (n (a -> b)) -> m (n a) -> m (n b)
-ap2 = ap . (ap <$>)
--}
-
-wlpPath :: ProgramPath -> (Free, EBool)
-wlpPath p = (fv, b)
-    where (fs, fv) = runState (mapM wlp p) Set.empty
-          b = foldr ($) (const sTrue) fs
-
-
-wlp :: BasicStmt -> State Free (EBool -> EBool)
-wlp (BAssert x) = state $ \fv -> let (sx, fv') = symbolizeB x fv in (\post e -> sx e .&& post e, fv')
-wlp (BAssume x) = state $ \fv -> let (sx, fv') = symbolizeB x fv in (\post e -> sx e .=> post e, fv')
-wlp (BAssign v x) = state $ \fv -> let (sx, fv') = symbolizeE x fv in (\post e -> post (Map.insert v (sx e) e), fv')
-
-
-symbolizeB :: Expr -> Free -> (EBool, Free)
-symbolizeB (LitB x) fv = (const $ literal x, fv)
-symbolizeB (OpNeg x) fv = let (sx, fv') = symbolizeB x fv in (sNot . sx, fv')
-symbolizeB (BinopExpr LessThan x y) fv = let (sx, fv') = symbolizeE x fv in let (sy, fv'') = symbolizeE y fv' in (\e -> sx e .< sy e, fv'')
-symbolizeB (BinopExpr Equal x y) fv = let (sx, fv') = symbolizeE x fv in let (sy, fv'') = symbolizeE y fv' in (\e -> sx e .== sy e, fv'')
-symbolizeB (BinopExpr GreaterThanEqual x y) fv = let (sx, fv') = symbolizeE x fv in let (sy, fv'') = symbolizeE y fv' in (\e -> sx e .>= sy e, fv'')
+wlpOne :: BasicStmt -> Env -> (AST -> Z3 AST, Z3 Env)
+--wlpOne Skip e = (return, e)
+--wlpOne (VarDeclaration v t) = undefined
+wlpOne (BAssert x) e   = ((symbolic e x >>=) . flip (mkBin mkAnd), return e)
+wlpOne (BAssume x) e   = ((symbolic e x >>=) . flip mkImplies, return e)
+wlpOne (BAssign v x) e = (return, flip (insert v) e <$> symbolic e x)
+wlpOne BAAssign{} _    = undefined
+wlpOne BDrefAssign{} _ = undefined
 
 
-symbolizeE :: Expr -> Free -> (EInt, Free)
-symbolizeE (LitI x) fv = (const $ literal $ fromIntegral x, fv)
-symbolizeE (Var v) fv = ((Map.! v), Set.insert v fv)
+symbolic :: Env -> Expr -> Z3 AST
+symbolic e ex = case ex of
+    Var v               -> return $ e ! v
+    LitI i              -> mkInteger $ fromIntegral i
+    LitB b              -> mkBool b
+    LitNull             -> error "literally null"
+    Parens x            -> undefined -- how dare you
+    ArrayElem a i       -> undefined      
+    OpNeg x             -> mkNot =<< symbolic e x
+    BinopExpr op x y    -> join $ mkBinop op <$> symbolic e x <*> symbolic e y 
+    Forall v x          -> makeQuantifier mkForallConst v e x
+    Exists v x          -> makeQuantifier mkExistsConst v e x
+    SizeOf a            -> undefined
+    RepBy a i x         -> undefined
+    Cond c a b          -> undefined
+    NewStore x          -> undefined
+    Dereference v       -> undefined
 
 
-test :: IO ()
-test = do
-    --let path = [Assume (opLessThan (Var "x") (Var "y")), Assume (opLessThan (Var "y") (LitI 3)), Assert (opLessThan (Var "x") (LitI 1))]
-    --let rhoE4 = [Assume (opLessThan (LitI 1) (Var "x")), Assume (OpNeg $ opLessThan (LitI 0) (Var "x")), Assign "y" (Var "x"), Assert (opEqual (Var "y") (LitI 1))]
-    let notTest = [BAssume (opLessThan (LitI 1) (Var "x")), BAssume (OpNeg $ opLessThan (LitI 2) (Var "x")), BAssign "y" (Var "x"), BAssert (opEqual (Var "y") (LitI 2))]
+mkBin :: ([AST] -> Z3 AST) -> AST -> AST -> Z3 AST
+mkBin op a b = op [a, b]
 
-    let (fv, wpe) = wlpPath notTest
-    let env = sequence $ Map.fromList $ map (\v -> (v, sInteger v)) $ Set.toAscList fv
 
-    let wp = wpe <$> env
+mkBinop :: BinOp -> AST -> AST -> Z3 AST
+mkBinop op = case op of
+    And                 -> mkBin mkAnd
+    Or                  -> mkBin mkOr
+    Implication         -> mkImplies
+    LessThan            -> mkLt
+    LessThanEqual       -> mkLe
+    GreaterThan         -> mkGt
+    GreaterThanEqual    -> mkGe
+    Equal               -> mkEq
+    Minus               -> mkBin mkSub
+    Plus                -> mkBin mkAdd
+    Multiply            -> mkBin mkMul
+    Divide              -> mkDiv
+    Alias               -> undefined
 
-    prove wp >>= print
+type MkQuantifier = [Pattern] -> [App] -> AST -> Z3 AST
+
+makeQuantifier :: MkQuantifier -> String -> Env -> Expr -> Z3 AST
+makeQuantifier mk v e x = do 
+    i <- mkFreshIntVar v
+    let e' = insert v i e -- note that the altered environment does not escape this quantified expression!
+
+    i' <- toApp i
+    x' <- symbolic e' x
+    mk [] [i'] x'
