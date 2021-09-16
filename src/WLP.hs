@@ -18,7 +18,7 @@ import ProgramPath
 import GCLParser.GCLDatatype
 
 
-type Env = Map String AST
+type Env = Map String AST -- make (Type, AST)
 
 validate :: ProgramPath -> IO ()
 validate p = evalZ3 $ do
@@ -33,6 +33,26 @@ validate p = evalZ3 $ do
 
     liftIO . putStrLn =<< astToString wlp'
     liftIO $ print res
+
+contradict :: ProgramPath -> IO ()
+contradict p = evalZ3 $ do
+    (wlp, env) <- wlpPath p empty
+    let free = map snd $ toList env
+
+    assert =<< mkNot wlp
+    
+    let label m f = (,) <$> astToString f <*> evalInt m f
+    let mbT2 (a, b) = (a,) <$> b
+
+    let model = \m -> mapMaybe mbT2 <$> mapM (label m) free
+    (res, sol) <- withModel model
+
+    liftIO . putStrLn =<< astToString wlp
+    liftIO $ print res -- "UnSat means no counterexample exists"
+
+    case sol of 
+        Nothing -> liftIO $ putStrLn "No counterexample found"
+        Just x  -> liftIO $ print x
 
 
 wlpPath :: ProgramPath -> Env -> Z3 (AST, Env)
