@@ -7,7 +7,8 @@ where
 import Control.Monad
 import Control.Monad.IO.Class
 
-import Data.Map
+import Data.Map ( (!), empty, insert, toList, Map )
+import Data.Maybe
 
 import Z3.Monad
 
@@ -21,21 +22,26 @@ type Env = Map String AST
 
 validate :: ProgramPath -> IO ()
 validate p = evalZ3 $ do
-    wlp <- wlpPath p empty
+    (wlp, env) <- wlpPath p empty
+    let free = map snd $ toList env
 
-    assert wlp
+    as <- mapM toApp free
+    wlp' <- quantifyAll as mkForallConst wlp
+
+    assert wlp'
     res <- check
 
-    liftIO . putStrLn =<< astToString wlp
+    liftIO . putStrLn =<< astToString wlp'
     liftIO $ print res
 
-wlpPath :: ProgramPath -> Env -> Z3 AST
-wlpPath [] _       = mkTrue
+
+wlpPath :: ProgramPath -> Env -> Z3 (AST, Env)
+wlpPath [] e       = (,e) <$> mkTrue
 wlpPath (x:xs) env = do
     let (wlpX, z3env') = wlpOne x env
     env' <- z3env'
-    rhs <- wlpPath xs env'
-    wlpX rhs
+    (rhs, env'') <- wlpPath xs env'
+    (, env'') <$> wlpX rhs
 
 wlpOne :: BasicStmt -> Env -> (AST -> Z3 AST, Z3 Env)
 wlpOne (BVarDecl v t) e = (return, flip (insert v) e <$> mkFreshFromType v t)
@@ -61,9 +67,9 @@ symbolic e ex = case ex of
     LitB b              -> mkBool b
     LitNull             -> error "literally null"
     Parens x            -> undefined -- how dare you
-    ArrayElem a i       -> undefined      
+    ArrayElem a i       -> undefined
     OpNeg x             -> mkNot =<< symbolic e x
-    BinopExpr op x y    -> join $ mkBinop op <$> symbolic e x <*> symbolic e y 
+    BinopExpr op x y    -> join $ mkBinop op <$> symbolic e x <*> symbolic e y
     Forall v x          -> makeQuantifier mkForallConst v e x
     Exists v x          -> makeQuantifier mkExistsConst v e x
     SizeOf a            -> undefined
@@ -96,10 +102,13 @@ mkBinop op = case op of
 type MkQuantifier = [Pattern] -> [App] -> AST -> Z3 AST
 
 makeQuantifier :: MkQuantifier -> String -> Env -> Expr -> Z3 AST
-makeQuantifier mk v e x = do 
+makeQuantifier mk v e x = do
     i <- mkFreshIntVar v
     let e' = insert v i e -- note that the altered environment does not escape this quantified expression!
 
     i' <- toApp i
     x' <- symbolic e' x
     mk [] [i'] x'
+
+quantifyAll :: [App] -> MkQuantifier -> AST -> Z3 AST
+quantifyAll as mk = mk [] as
