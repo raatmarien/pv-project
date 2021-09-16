@@ -38,14 +38,21 @@ wlpPath (x:xs) env = do
     wlpX rhs
 
 wlpOne :: BasicStmt -> Env -> (AST -> Z3 AST, Z3 Env)
---wlpOne Skip e = (return, e)
---wlpOne (VarDeclaration v t) = undefined
-wlpOne (BAssert x) e   = ((symbolic e x >>=) . flip (mkBin mkAnd), return e)
-wlpOne (BAssume x) e   = ((symbolic e x >>=) . flip mkImplies, return e)
-wlpOne (BAssign v x) e = (return, flip (insert v) e <$> symbolic e x)
-wlpOne BAAssign{} _    = undefined
-wlpOne BDrefAssign{} _ = undefined
+wlpOne (BVarDecl v t) e = (return, flip (insert v) e <$> mkFreshFromType v t)
+wlpOne (BAssert x) e    = ((symbolic e x >>=) . flip (mkBin mkAnd), return e)
+wlpOne (BAssume x) e    = ((symbolic e x >>=) . flip mkImplies, return e)
+wlpOne (BAssign v x) e  = (return, flip (insert v) e <$> symbolic e x)
+wlpOne BAAssign{} _     = undefined
+wlpOne BDrefAssign{} _  = undefined
 
+
+mkFreshFromType :: String -> Type -> Z3 AST
+mkFreshFromType v t = case t of
+    PType x -> case x of
+        PTInt -> mkFreshIntVar v
+        PTBool -> mkFreshBoolVar v
+    RefType -> undefined
+    AType x -> undefined
 
 symbolic :: Env -> Expr -> Z3 AST
 symbolic e ex = case ex of

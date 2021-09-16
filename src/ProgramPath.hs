@@ -11,6 +11,7 @@ data BasicStmt
   | BAssign String Expr
   | BAAssign String Expr Expr
   | BDrefAssign String Expr
+  | BVarDecl String Type
   deriving (Show, Eq)
 
 type ProgramPath = [BasicStmt]
