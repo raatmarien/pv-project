@@ -49,7 +49,7 @@ testCombinesIfThenElse = QC.testProperty "test that as many program paths are ge
                                     $ IfThenElse (LitB True) s1 s2
                            return $ length pt == (length p1) + (length p2)
 
-testIgnoresBlocks = QC.testProperty "test that blocks are ignored" $
+testIgnoresEmptyBlocks = QC.testProperty "test that empty blocks are ignored" $
                     \s -> do
                       k <- choose (0, 5)
                       return $ generateProgramPaths k s
@@ -76,7 +76,7 @@ programPathTests = testGroup "Program path tests" [
   testZeroK,
   testNotTooLong,
   testCombinesIfThenElse,
-  testIgnoresBlocks,
+  testIgnoresEmptyBlocks,
   testSeqMakesCartesianProduct,
   testWhileContainsEndCase
   ]

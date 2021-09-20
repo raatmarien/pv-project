@@ -92,7 +92,24 @@ data Expr
     | Cond               Expr   Expr   Expr
     | NewStore           Expr
     | Dereference        String
-    deriving (Eq) 
+    deriving (Eq)
+
+mapExpr :: (String -> String) -> Expr -> Expr
+mapExpr f (Var s) = Var $ f s
+mapExpr f (Parens e) = Parens $ mapExpr f e
+mapExpr f (ArrayElem e1 e2) = ArrayElem (mapExpr f e1) (mapExpr f e2)
+mapExpr f (OpNeg e) = OpNeg $ mapExpr f e
+mapExpr f (BinopExpr b e1 e2) = BinopExpr b (mapExpr f e1) (mapExpr f e2)
+mapExpr f (Forall s e) = Forall (f s) $ mapExpr f e
+mapExpr f (Exists s e) = Exists (f s) $ mapExpr f e
+mapExpr f (SizeOf e) = SizeOf $ mapExpr f e
+mapExpr f (RepBy e1 e2 e3)
+  = RepBy (mapExpr f e1) (mapExpr f e2) (mapExpr f e3)
+mapExpr f (Cond e1 e2 e3)
+  = Cond (mapExpr f e1) (mapExpr f e2) (mapExpr f e3)
+mapExpr f (NewStore e) = NewStore $ mapExpr f e
+mapExpr f (Dereference s) = Dereference $ f s
+mapExpr _ e = e
     
 data BinOp = And | Or | Implication 
     | LessThan | LessThanEqual | GreaterThan | GreaterThanEqual | Equal
