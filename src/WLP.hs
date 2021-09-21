@@ -8,7 +8,7 @@ import Control.Monad
 import Control.Monad.IO.Class
 
 import Data.Map ( (!), empty, insert, toList, Map )
-import Data.Maybe
+import Data.Functor
 
 import Z3.Monad
 
@@ -18,21 +18,20 @@ import ProgramPath
 import GCLParser.GCLDatatype
 
 
-type Env = Map String AST -- make (Type, AST)
+type Env = Map String (Type, AST)
+data Concrete = IntC Integer | BoolC Bool deriving Show
 
-validate :: ProgramPath -> IO ()
-validate p = evalZ3 $ do
-    (wlp, env) <- wlpPath p empty
-    let free = map snd $ toList env
 
-    as <- mapM toApp free
-    wlp' <- quantifyAll as mkForallConst wlp
+evalType :: Model -> Type -> AST -> Z3 (Maybe Concrete)
+evalType m t f = case t of
+    PType x -> case x of
+        PTInt -> (IntC <$>) <$> evalInt m f
+        PTBool -> (BoolC <$>) <$> evalBool m f
+    RefType -> undefined
+    AType x -> undefined
 
-    assert wlp'
-    res <- check
-
-    liftIO . putStrLn =<< astToString wlp'
-    liftIO $ print res
+label :: Model -> Type -> AST -> Z3 (String, Maybe Concrete)
+label m t f = astToString f >>= (evalType m t f <&>) . (,)
 
 contradict :: ProgramPath -> IO ()
 contradict p = evalZ3 $ do
@@ -40,17 +39,14 @@ contradict p = evalZ3 $ do
     let free = map snd $ toList env
 
     assert =<< mkNot wlp
-    
-    let label m f = (,) <$> astToString f <*> evalInt m f
-    let mbT2 (a, b) = (a,) <$> b
 
-    let model = \m -> mapMaybe mbT2 <$> mapM (label m) free
+    let model m = mapM (uncurry $ label m) free
     (res, sol) <- withModel model
 
     liftIO . putStrLn =<< astToString wlp
     liftIO $ print res -- "UnSat means no counterexample exists"
 
-    case sol of 
+    case sol of
         Nothing -> liftIO $ putStrLn "No counterexample found"
         Just x  -> liftIO $ print x
 
@@ -64,10 +60,10 @@ wlpPath (x:xs) env = do
     (, env'') <$> wlpX rhs
 
 wlpOne :: BasicStmt -> Env -> (AST -> Z3 AST, Z3 Env)
-wlpOne (BVarDecl v t) e = (return, flip (insert v) e <$> mkFreshFromType v t)
+wlpOne (BVarDecl v t) e = (return, flip (insert v . (t, )) e <$> mkFreshFromType v t)
 wlpOne (BAssert x) e    = ((symbolic e x >>=) . flip (mkBin mkAnd), return e)
 wlpOne (BAssume x) e    = ((symbolic e x >>=) . flip mkImplies, return e)
-wlpOne (BAssign v x) e  = (return, flip (insert v) e <$> symbolic e x)
+wlpOne (BAssign v x) e  = (return, flip (insert v . (fst $ e ! v, )) e <$> symbolic e x)
 wlpOne BAAssign{} _     = undefined
 wlpOne BDrefAssign{} _  = undefined
 
@@ -82,7 +78,7 @@ mkFreshFromType v t = case t of
 
 symbolic :: Env -> Expr -> Z3 AST
 symbolic e ex = case ex of
-    Var v               -> return $ e ! v
+    Var v               -> return $ snd $ e ! v
     LitI i              -> mkInteger $ fromIntegral i
     LitB b              -> mkBool b
     LitNull             -> error "literally null"
@@ -121,14 +117,16 @@ mkBinop op = case op of
 
 type MkQuantifier = [Pattern] -> [App] -> AST -> Z3 AST
 
+
 makeQuantifier :: MkQuantifier -> String -> Env -> Expr -> Z3 AST
 makeQuantifier mk v e x = do
     i <- mkFreshIntVar v
-    let e' = insert v i e -- note that the altered environment does not escape this quantified expression!
+    let e' = insert v (PType PTInt, i) e -- note that the altered environment does not escape this quantified expression!
 
     i' <- toApp i
     x' <- symbolic e' x
     mk [] [i'] x'
 
+{-
 quantifyAll :: [App] -> MkQuantifier -> AST -> Z3 AST
-quantifyAll as mk = mk [] as
+quantifyAll as mk = mk [] as-}
