@@ -4,6 +4,7 @@ import ProgramPath
 import GCLParser.GCLDatatype
 import Test.Hspec
 import Test.Hspec.QuickCheck
+import Test.QuickCheck as QC
 
 instance Arbitrary Stmt where
   arbitrary = QC.oneof [

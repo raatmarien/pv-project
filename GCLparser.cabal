@@ -51,3 +51,4 @@ Test-Suite test-verifier
   build-depends:        base >= 4.10
                       , GCLparser
                       , hspec
+                      , QuickCheck
