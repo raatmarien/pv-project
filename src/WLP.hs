@@ -83,7 +83,7 @@ symbolic e ex = case ex of
     LitI i              -> mkInteger $ fromIntegral i
     LitB b              -> mkBool b
     LitNull             -> error "literally null"
-    Parens x            -> undefined -- how dare you
+    Parens x            -> symbolic e x -- how dare you
     ArrayElem a i       -> undefined
     OpNeg x             -> mkNot =<< symbolic e x
     BinopExpr op x y    -> join $ mkBinop op <$> symbolic e x <*> symbolic e y
