@@ -33,7 +33,7 @@ evalType m t f = case t of
 label :: Model -> Type -> AST -> Z3 (String, Maybe Concrete)
 label m t f = astToString f >>= (evalType m t f <&>) . (,)
 
-contradict :: ProgramPath -> IO ()
+contradict :: ProgramPath -> IO Bool
 contradict p = evalZ3 $ do
     (wlp, env) <- wlpPath p empty
     let free = map snd $ toList env
@@ -43,13 +43,14 @@ contradict p = evalZ3 $ do
     let model m = mapM (uncurry $ label m) free
     (res, sol) <- withModel model
 
-    liftIO . putStrLn =<< astToString wlp
-    liftIO $ print res -- "UnSat means no counterexample exists"
-
     case sol of
-        Nothing -> liftIO $ putStrLn "No counterexample found"
-        Just x  -> liftIO $ print x
-
+        Nothing -> do
+          -- putStrLn "The program path is valid."
+          return False
+        Just x  -> do
+          -- putStrLn "The program path is invalid.\nCounter example:"
+          -- print x
+          return True
 
 wlpPath :: ProgramPath -> Env -> Z3 (AST, Env)
 wlpPath [] e       = (,e) <$> mkTrue

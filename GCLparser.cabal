@@ -25,6 +25,7 @@ Library
                      , GCLLexer.Token
                      , GCLLexer.Lexer
                      , ExamplesOfSemanticFunction
+                     , Verifier
   -- other-extensions:
   build-depends:       base   >= 4.10
                      , array

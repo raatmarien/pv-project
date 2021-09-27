@@ -20,6 +20,9 @@ type ProgramPath = [BasicStmt]
 
 type PathEnv = (M.Map String String, Int)
 
+toStatement :: Program -> Stmt
+toStatement prg = Block ((input prg) ++ (output prg)) $ stmt prg
+
 -- This function generates all paths of up to the given length for a
 -- statement. Only paths that go all the way from start to end are
 -- included. When no paths of the length reach the end, this may return
