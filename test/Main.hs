@@ -1,6 +1,8 @@
 import ProgramPathTests
-import Test.Tasty
 
-main = defaultMain tests
+import Test.Hspec
 
-tests = testGroup "Tests" [programPathTests]
+main :: IO ()
+main = hspec $ do
+  describe "Tests" $ do
+    programPathTests

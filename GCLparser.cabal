@@ -50,6 +50,4 @@ Test-Suite test-verifier
   other-modules:      ProgramPathTests
   build-depends:        base >= 4.10
                       , GCLparser
-                      , tasty
-                      , tasty-hunit
-                      , tasty-quickcheck
+                      , hspec
