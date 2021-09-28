@@ -1,0 +1,10 @@
+// An example of a method F, which expects two parameters X and Y.
+// The method should be marked as faulty.
+F(x:int, y:int | z:int){
+  assume y<x;
+  while y<x do { 
+    y:=y+1 
+  }; 
+  z:=x;
+  assert z>y // Should not be satisfied.
+}
