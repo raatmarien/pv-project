@@ -28,7 +28,7 @@ evalType m t f = case t of
         PTInt -> (IntC <$>) <$> evalInt m f
         PTBool -> (BoolC <$>) <$> evalBool m f
     RefType -> undefined
-    AType x -> undefined
+    AType x -> return Nothing -- TODO represent this
 
 label :: Model -> Type -> AST -> Z3 (String, Maybe Concrete)
 label m t f = astToString f >>= (evalType m t f <&>) . (,)
@@ -61,21 +61,37 @@ wlpPath (x:xs) env = do
     (, env'') <$> wlpX rhs
 
 wlpOne :: BasicStmt -> Env -> (AST -> Z3 AST, Z3 Env)
-wlpOne (BVarDecl v t) e = (return, flip (insert v . (t, )) e <$> mkFreshFromType v t)
+wlpOne (BVarDecl v t) e = (return, mkFreshFromType v t e)
 wlpOne (BAssert x) e    = ((symbolic e x >>=) . flip (mkBin mkAnd), return e)
 wlpOne (BAssume x) e    = ((symbolic e x >>=) . flip mkImplies, return e)
 wlpOne (BAssign v x) e  = (return, flip (insert v . (fst $ e ! v, )) e <$> symbolic e x)
-wlpOne BAAssign{} _     = undefined
+wlpOne (BAAssign v i x) e = (return,
+                             do index <- symbolic e i
+                                value <- symbolic e x
+                                let (t, oldArray) = e ! v
+                                newArray <- mkStore oldArray index value
+                                return $ insert v (t, newArray) e)
 wlpOne BDrefAssign{} _  = undefined
 
 
-mkFreshFromType :: String -> Type -> Z3 AST
-mkFreshFromType v t = case t of
+mkFreshFromType :: String -> Type -> Env -> Z3 Env
+mkFreshFromType v t env = case t of
     PType x -> case x of
-        PTInt -> mkFreshIntVar v
-        PTBool -> mkFreshBoolVar v
+        PTInt -> do
+          var <- mkFreshIntVar v
+          return $ insert v (t, var) env
+        PTBool -> do
+          var <- mkFreshBoolVar v
+          return $ insert v (t, var) env
     RefType -> undefined
-    AType x -> undefined
+    AType x -> do
+      intSort <- mkIntSort
+      boolSort <- mkBoolSort
+      arraySort <- mkArraySort intSort
+                   (if x == PTInt then intSort else boolSort)
+      a <- mkFreshVar v arraySort
+      len_a <- mkFreshVar ("#"++v) intSort
+      return $ insert v (t, a) $ insert ("#"++v) (PType PTInt, len_a) env
 
 symbolic :: Env -> Expr -> Z3 AST
 symbolic e ex = case ex of
@@ -84,12 +100,16 @@ symbolic e ex = case ex of
     LitB b              -> mkBool b
     LitNull             -> error "literally null"
     Parens x            -> symbolic e x -- how dare you
-    ArrayElem a i       -> undefined
+    ArrayElem a i       -> do
+      array <- symbolic e a
+      index <- symbolic e i
+      mkSelect array index
     OpNeg x             -> mkNot =<< symbolic e x
     BinopExpr op x y    -> join $ mkBinop op <$> symbolic e x <*> symbolic e y
     Forall v x          -> makeQuantifier mkForallConst v e x
     Exists v x          -> makeQuantifier mkExistsConst v e x
-    SizeOf a            -> undefined
+    SizeOf (Var v)      -> return $ snd $ e ! ("#" ++ v)
+    SizeOf _            -> error "How do we represent the length of an unknown array?" -- TODO
     RepBy a i x         -> undefined
     Cond c a b          -> undefined
     NewStore x          -> undefined
