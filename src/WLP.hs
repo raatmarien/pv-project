@@ -62,17 +62,46 @@ wlpPath (x:xs) env = do
 
 wlpOne :: BasicStmt -> Env -> (AST -> Z3 AST, Z3 Env)
 wlpOne (BVarDecl v t) e = (return, mkFreshFromType v t e)
-wlpOne (BAssert x) e    = ((symbolic e x >>=) . flip (mkBin mkAnd), return e)
-wlpOne (BAssume x) e    = ((symbolic e x >>=) . flip mkImplies, return e)
-wlpOne (BAssign v x) e  = (return, flip (insert v . (fst $ e ! v, )) e <$> symbolic e x)
-wlpOne (BAAssign v i x) e = (return,
-                             do index <- symbolic e i
-                                value <- symbolic e x
-                                let (t, oldArray) = e ! v
-                                newArray <- mkStore oldArray index value
-                                return $ insert v (t, newArray) e)
+wlpOne (BAssert x) e    = (\postCondition -> do
+                               astExpr <- symbolic e x
+                               (mkBin mkAnd) postCondition astExpr,
+                           return e)
+  --(symbolic e x >>=) . flip (mkBin mkAnd), return e)
+wlpOne (BAssume x) e      = ((symbolic e x >>=) . flip mkImplies, return e)
+-- x := y
+wlpOne (BAssign v x) e    = (return, do
+                                 expr <- symbolic e x
+                                 let (t, _) = e ! v
+                                 -- When we have an array, we also need to copy the length
+                                 case t of
+                                   (AType _) ->
+                                     let arrayInEnv = insert v (t, expr) e
+                                         (Var y) = x
+                                         (_, leny) = e ! ("#"++y)
+                                         lenInEnv = insert ("#"++v) (PType PTInt, leny) arrayInEnv
+                                     in return lenInEnv
+                                   _         -> return $ insert v (t, expr) e)
+wlpOne (BAAssign v i x) e = (
+  -- We want to assert that the assign lays in the boundaries of the array
+  -- So we conjunct the given postcondition with the condition 0 <= i < #v.
+   \postCondition -> do
+     index <- symbolic e i
+     let (_, len) = e ! ("#"++v)
+     indexLessThen <- mkLt index len
+     withLess <- (mkBin mkAnd) postCondition indexLessThen
+     zero <- mkInteger 0
+     indexGreaterEqual <- mkGe index zero
+     (mkBin mkAnd) withLess indexGreaterEqual,
+   do index <- symbolic e i
+      value <- symbolic e x
+      let (t, oldArray) = e ! v
+      newArray <- mkStore oldArray index value
+      return $ insert v (t, newArray) e)
 wlpOne BDrefAssign{} _  = undefined
 
+
+-- {?} v[i] = x {Q}
+-- ? = Q[v(i repby x)/v] && i < #v && i >= 0
 
 mkFreshFromType :: String -> Type -> Env -> Z3 Env
 mkFreshFromType v t env = case t of
@@ -109,7 +138,7 @@ symbolic e ex = case ex of
     Forall v x          -> makeQuantifier mkForallConst v e x
     Exists v x          -> makeQuantifier mkExistsConst v e x
     SizeOf (Var v)      -> return $ snd $ e ! ("#" ++ v)
-    SizeOf _            -> error "How do we represent the length of an unknown array?" -- TODO
+    SizeOf _            -> error "This should be impossible!"
     RepBy a i x         -> undefined
     Cond c a b          -> undefined
     NewStore x          -> undefined
