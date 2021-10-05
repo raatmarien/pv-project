@@ -52,3 +52,7 @@ Test-Suite test-verifier
                       , GCLparser
                       , hspec
                       , QuickCheck
+                      , raw-strings-qq
+  default-extensions:  TupleSections
+                     , NamedFieldPuns
+                     , QuasiQuotes
