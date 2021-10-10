@@ -1,0 +1,4 @@
+- ignore: {name: Redundant $}
+- ignore: {name: Functor law}
+- ignore: {name: Use <$>}
+- warn: {name: Redundant do}

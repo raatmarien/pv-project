@@ -1,0 +1,121 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           bounded-verification
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/bounded-verification#readme>
+homepage:       https://github.com/githubuser/bounded-verification#readme
+bug-reports:    https://github.com/githubuser/bounded-verification/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2021 Author name here
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/bounded-verification
+
+library
+  exposed-modules:
+      BoundedVerification
+      Gcl
+      Path
+      Std
+      SymbolicExecution
+      Tree
+  other-modules:
+      Paths_bounded_verification
+  hs-source-dirs:
+      src
+  default-extensions:
+      NoImplicitPrelude
+      ImportQualifiedPost
+      OverloadedStrings
+      ScopedTypeVariables
+      LambdaCase
+      GeneralizedNewtypeDeriving
+      TupleSections
+      DeriveDataTypeable
+      StandaloneDeriving
+      DeriveGeneric
+      QuasiQuotes
+      DeriveFunctor
+      PartialTypeSignatures
+  ghc-options: -O0 -Wall -Wno-name-shadowing
+  build-depends:
+      GCLparser
+    , base >=4.7 && <5
+    , containers
+    , lens
+    , relude
+    , unordered-containers
+    , z3
+  default-language: Haskell2010
+
+executable bounded-verification-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_bounded_verification
+  hs-source-dirs:
+      app
+  default-extensions:
+      NoImplicitPrelude
+      ImportQualifiedPost
+      OverloadedStrings
+      ScopedTypeVariables
+      LambdaCase
+      GeneralizedNewtypeDeriving
+      TupleSections
+      DeriveDataTypeable
+      StandaloneDeriving
+      DeriveGeneric
+      QuasiQuotes
+      DeriveFunctor
+      PartialTypeSignatures
+  ghc-options: -O0 -Wall -Wno-name-shadowing -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , bounded-verification
+  default-language: Haskell2010
+
+test-suite bounded-verification-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_bounded_verification
+  hs-source-dirs:
+      test
+  default-extensions:
+      NoImplicitPrelude
+      ImportQualifiedPost
+      OverloadedStrings
+      ScopedTypeVariables
+      LambdaCase
+      GeneralizedNewtypeDeriving
+      TupleSections
+      DeriveDataTypeable
+      StandaloneDeriving
+      DeriveGeneric
+      QuasiQuotes
+      DeriveFunctor
+      PartialTypeSignatures
+  ghc-options: -O0 -Wall -Wno-name-shadowing -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      GCLparser
+    , base >=4.7 && <5
+    , bounded-verification
+    , containers
+    , hspec
+    , pretty-simple
+    , raw-strings-qq
+    , relude
+    , z3
+  default-language: Haskell2010

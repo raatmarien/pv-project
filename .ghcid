@@ -1,0 +1,1 @@
+-ac "stack repl --test --main-is bounded-verification:bounded-verification-test"

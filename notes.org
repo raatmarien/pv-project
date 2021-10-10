@@ -1,0 +1,14 @@
+- arrays
+  - insert assertions
+    - array assign
+    - indexing
+    - indexing inside assertions and assumptions too but potentially under quantifiers
+- renaming inside quantifiers
+- seperate evaluatable expressions from logical ones?
+- optimizations
+  - Data.Sequence
+  - conjunctive normal form
+  - float `assert` up
+  - z3's substitute
+  - single huge z3 ast
+  - bit vector instead of integer
