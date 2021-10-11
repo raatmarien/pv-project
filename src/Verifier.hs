@@ -27,11 +27,11 @@ verifyProgram maybeN k filename = do
 
   if inValid
     then do putStrLn "Program is invalid!"
-            let wrongPaths = filter fst
+            let wrongPath = head $ filter fst
                              $ zip contradictions programPaths
-            putStrLn $ (show $ length wrongPaths) ++ " paths were invalid"
             putStrLn "An example is:"
             print $ head wrongPaths
     else putStrLn "Program is valid."
 
   return $ not inValid
+
