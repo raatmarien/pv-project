@@ -62,6 +62,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - bounded-verification
+    - optparse-generic
 
 tests:
   bounded-verification-test:
