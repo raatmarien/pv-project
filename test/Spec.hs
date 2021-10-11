@@ -26,42 +26,8 @@ import Relude.Unsafe qualified as U
 
 spec :: Spec
 spec = do
-  describe "renaming" $ do
-    it "works" $
-      (
-        Gcl.rename $
-        Gcl.fromParseResult $
-        parse $
-        [r|
-          f(a:bool | b:bool) {
-            var a:bool {
-              assert a;
-              assert b
-            };
-            assert a;
-            var a:bool {
-              assert a
-            }
-          }
-        |]
-      )
-      `shouldSatisfy`
-      renamedCorrectly
   describe "examples" $ do
-    describe "bsort" $ do
       verify "benchmark/bsort.gcl" 4 35
-      it "mutations fail for N=4" $
-        (=<<) (`shouldSatisfy` all isJust) $
-        fmap (take 4) $
-        -- line 12. "k<" -> "k<=". harmless because of "m := #a-1 ;"
-        fmap (drop 1) $
-        verifyMutations "benchmark/bsort.gcl" 4 35
-    describe "memberOf" $ do
-      verify "benchmark/memberOf.gcl" 4 30
-    describe "divByN" $ do
-      verify "benchmark/divByN.gcl" 3 40
-    describe "pullUp" $ do
-      verify "benchmark/pullUp.gcl" 5 30
   where
     verify program nSubstitute searchDepth =
       it ("verifies for N=" ++ show nSubstitute) $
@@ -88,6 +54,33 @@ verifyMutations file nSubstitute searchDepth =
   fmap decodeUtf8 $
   readFileBS ("test/examples/" <> file)
 
+-- double free or corruption (!prev)
+-- Aborted (core dumped)
+
+-- double free or corruption (out)
+-- Aborted (core dumped)
+
+-- Segmentation fault (core dumped)
+
+-- Rightbounded-verification-exe: Z3 error: select requires 0 arguments, but was provided with 2 arguments
+
+-- malloc(): smallbin double linked list corrupted
+
+-- ASSERTION VIOLATION
+-- File: ../src/ast/ast.cpp
+-- Line: 450
+-- UNEXPECTED CODE WAS REACHED.
+-- Z3 4.8.10.0
+-- Please file an issue with this message and more detail about how you encountered it at https://github.com/Z3Prover/z3/issues/new
+-- double free or corruption (fasttop)
+
+
+-- ASSERTION VIOLATION
+-- File: ../src/ast/ast.cpp
+-- Line: 432
+-- UNEXPECTED CODE WAS REACHED.
+-- Z3 4.8.10.0
+-- Please file an issue with this message and more detail about how you encountered it at https://github.com/Z3Prover/z3/issues/new
 
 -- -- $> (=<<) pPrintLightBg $ fmap (U.!! 5) $ (fmap . fmap) isRight $ verifyMutations "benchmark/bsort.gcl" 4 45
 

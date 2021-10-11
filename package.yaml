@@ -26,6 +26,8 @@ ghc-options:
 - -O0
 - -Wall
 - -Wno-name-shadowing
+- -fno-cse
+- -fno-full-laziness
 
 default-extensions:
 - NoImplicitPrelude
