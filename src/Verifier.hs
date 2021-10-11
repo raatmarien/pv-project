@@ -8,14 +8,16 @@ import WLP
 import ProgramPath
 
 -- Could be a Maybe map with counter example?
-verifyProgram :: Int -> String -> IO Bool
-verifyProgram k filename = do
+verifyProgram :: (Maybe Int) -> Int -> String -> IO Bool
+verifyProgram maybeN k filename = do
   (Right prg) <- parseGCLfile filename
   putStrLn "Program to verify:\n"
   putStrLn . ppProgram2String $ prg
   putStrLn ""
 
-  let programPaths = generateProgramPaths k $ toStatement prg
+  let programPaths = case maybeN of
+        Just n -> generateProgramPathsWithN n k $ toStatement prg
+        Nothing -> generateProgramPaths k $ toStatement prg
   
   putStrLn $ "Validating " ++ (show $ length programPaths) ++ " paths"
   

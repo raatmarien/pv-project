@@ -34,6 +34,12 @@ toStatement prg = Block ((input prg) ++ (output prg)) $ stmt prg
 generateProgramPaths :: Int -> Stmt -> [ProgramPath]
 generateProgramPaths = generateProgramPaths' (M.empty, 0)
 
+generateProgramPathsWithN :: Int -> Int -> Stmt -> [ProgramPath]
+generateProgramPathsWithN n k s = map ([BVarDecl "N" $ PType PTInt,
+                                        BAssign "N" $ LitI n] ++)
+                                  paths
+  where paths = generateProgramPaths k s
+
 generateProgramPaths' :: PathEnv -> Int -> Stmt -> [ProgramPath]
 generateProgramPaths' _ _ Skip = [[]]
 generateProgramPaths' env k (Block decls s)
