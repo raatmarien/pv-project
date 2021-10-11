@@ -28,6 +28,7 @@ library
       BoundedVerification
       Gcl
       Path
+      RunFunctions
       Std
       SymbolicExecution
       Tree

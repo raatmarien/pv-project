@@ -137,7 +137,7 @@ withoutMutations ::
   Integer ->
   IO (Either String (Either Certainty (HashMap Identifier Value)))
 withoutMutations file nSubstitute searchDepth =
-  (fmap . fmap) (boundedVerification searchDepth) $
+  (fmap . fmap) (boundedVerification searchDepth True) $
   (fmap . fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
   fmap Gcl.fromParseResult $
   fmap (fromRight $ error "not testing the parser") $
@@ -151,7 +151,7 @@ withMutations ::
   Integer ->
   IO ([Either String (Either Certainty (HashMap Identifier Value))])
 withMutations file nSubstitute searchDepth =
-  (fmap . fmap . fmap) (boundedVerification searchDepth) $
+  (fmap . fmap . fmap) (boundedVerification searchDepth True) $
   (fmap . fmap . fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
   (fmap . fmap) Gcl.fromParseResult $
   (fmap . fmap) snd $

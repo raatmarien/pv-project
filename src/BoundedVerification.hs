@@ -11,14 +11,16 @@ import Std
 
 boundedVerification ::
   Integer ->
+  Bool ->
   [Gcl.Statement] ->
   Either Certainty (HashMap Identifier Value)
-boundedVerification searchDepth =
+boundedVerification searchDepth prune =
   (foldr mergeResults (Left Certain)) . -- short circuit
   fmap SymbolicExecution.counterExample .
   Tree.leaves .
-  (fromMaybe Empty) .
-  Tree.pruneByFeasibility .
+  (if prune then ((fromMaybe Empty) .
+                  Tree.pruneByFeasibility)
+   else id) .
   Tree.pathsTree .
   (fromMaybe Empty) .
   (Tree.pruneByLength searchDepth) .
