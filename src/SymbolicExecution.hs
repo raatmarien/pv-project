@@ -63,6 +63,7 @@ data Value =
   BoolArray [Bool]
   deriving (Show, Eq)
 
+{-# noinline counterExample #-}
 counterExample ::
   [Path.Statement] -> Either Certainty (HashMap Identifier Value)
 counterExample statements =

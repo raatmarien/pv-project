@@ -49,7 +49,7 @@ spec = do
   describe "examples" $ do
     describe "bsort" $ do
       it "verifies for N=4" $
-        withoutMutations "test/examples/benchmark/bsort.gcl" 4 32
+        withoutMutations "test/examples/benchmark/bsort.gcl" 4 36
         `shouldReturn`
         Right (Left Certain)
       it "mutations fail for N=4" $
@@ -66,6 +66,34 @@ spec = do
         (=<<) (`shouldSatisfy` all isRight) $
         fmap (take 4) $
         (withMutations "test/examples/benchmark/divByN.gcl" 3 50)
+
+-- double free or corruption (!prev)
+-- Aborted (core dumped)
+
+-- double free or corruption (out)
+-- Aborted (core dumped)
+
+-- Segmentation fault (core dumped)
+
+-- Rightbounded-verification-exe: Z3 error: select requires 0 arguments, but was provided with 2 arguments
+
+-- malloc(): smallbin double linked list corrupted
+
+-- ASSERTION VIOLATION
+-- File: ../src/ast/ast.cpp
+-- Line: 450
+-- UNEXPECTED CODE WAS REACHED.
+-- Z3 4.8.10.0
+-- Please file an issue with this message and more detail about how you encountered it at https://github.com/Z3Prover/z3/issues/new
+-- double free or corruption (fasttop)
+
+
+-- ASSERTION VIOLATION
+-- File: ../src/ast/ast.cpp
+-- Line: 432
+-- UNEXPECTED CODE WAS REACHED.
+-- Z3 4.8.10.0
+-- Please file an issue with this message and more detail about how you encountered it at https://github.com/Z3Prover/z3/issues/new
 
 -- -- $> pPrintLightBg =<< withoutMutations "test/examples/benchmark/bsort.gcl" 4 32
 
@@ -172,22 +200,6 @@ symbolifyAndShow statements =
     (z3Ast, _) <- symbolifyPath statements
     astToString z3Ast
     
--- test :: IO ()
--- test =
---   (=<<) pPrintLightBg $
---   (fmap . fmap) (boundedVerification 33) $
---   fmap decodeUtf8Strict $
---   readFileBS "test/examples/benchmark/bsort.gcl"
--- -- double free or corruption (!prev)
--- -- Aborted (core dumped)
-
--- -- double free or corruption (out)
--- -- Aborted (core dumped)
-
--- -- Segmentation fault (core dumped)
-
--- -- Rightbounded-verification-exe: Z3 error: select requires 0 arguments, but was provided with 2 arguments
-
 main :: IO ()
 main = hspec spec
 

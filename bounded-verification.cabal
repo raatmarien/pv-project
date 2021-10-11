@@ -49,7 +49,7 @@ library
       QuasiQuotes
       DeriveFunctor
       PartialTypeSignatures
-  ghc-options: -O0 -Wall -Wno-name-shadowing
+  ghc-options: -O0 -Wall -Wno-name-shadowing -fno-cse -fno-full-laziness
   build-depends:
       GCLparser
     , base >=4.7 && <5
@@ -80,7 +80,7 @@ executable bounded-verification-exe
       QuasiQuotes
       DeriveFunctor
       PartialTypeSignatures
-  ghc-options: -O0 -Wall -Wno-name-shadowing -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -O0 -Wall -Wno-name-shadowing -fno-cse -fno-full-laziness -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , bounded-verification
@@ -107,7 +107,7 @@ test-suite bounded-verification-test
       QuasiQuotes
       DeriveFunctor
       PartialTypeSignatures
-  ghc-options: -O0 -Wall -Wno-name-shadowing -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -O0 -Wall -Wno-name-shadowing -fno-cse -fno-full-laziness -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       GCLparser
     , base >=4.7 && <5
