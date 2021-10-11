@@ -47,25 +47,21 @@ spec = do
       `shouldSatisfy`
       renamedCorrectly
   describe "examples" $ do
-    describe "bsort" $ do
-      it "verifies for N=4" $
-        withoutMutations "test/examples/benchmark/bsort.gcl" 4 32
+    verify "memberOf.gcl" 4 30
+    verify "divByN.gcl" 3 50
+    verify "pullUp.gcl" 5 100
+    verify "bsort.gcl" 4 32
+  where
+    verify program n k = describe program $ do
+      it ("verifies for N=" ++ (show n)) $
+        withoutMutations ("test/examples/benchmark/" ++ program) n k
         `shouldReturn`
         Right (Left Certain)
-      it "mutations fail for N=4" $
+      it ("mutations fail for N=" ++ show n) $
         (=<<) (`shouldSatisfy` all isRight) $
         fmap (take 4) $
-        fmap (drop 1) $
-        (withMutations "test/examples/benchmark/bsort.gcl" 4 32)
-    describe "divByN" $ do
-      it "verifies for N=3" $
-        withoutMutations "test/examples/benchmark/divByN.gcl" 3 50
-        `shouldReturn`
-        Right (Left Certain)
-      it "mutations fail for N=3" $
-        (=<<) (`shouldSatisfy` all isRight) $
-        fmap (take 4) $
-        (withMutations "test/examples/benchmark/divByN.gcl" 3 50)
+        (withMutations ("test/examples/benchmark/" ++ program) n k)
+
 
 -- -- $> pPrintLightBg =<< withoutMutations "test/examples/benchmark/bsort.gcl" 4 32
 
