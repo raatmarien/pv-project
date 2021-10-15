@@ -3,14 +3,14 @@
   -Wno-unused-imports
 #-}
 
-import BoundedVerification (boundedVerification, mergeResults, parse)
+import BoundedVerification (boundedVerification, parse)
 import GCLUtils (mutateProgram)
 import Gcl (Type (PType), PrimitiveType (PTBool), Expression (IntegerLiteral), Identifier)
 import Gcl qualified
 import Path qualified
 import Tree (Tree (Empty))
 import Tree qualified
-import SymbolicExecution (Value, Certainty (Certain), counterExample, symbolifyPath)
+import SymbolicExecution (Value, counterExample, symbolifyPath)
 
 import Data.Sequence qualified as S
 import Test.Hspec
@@ -51,7 +51,7 @@ spec = do
     describe "bsort" $ do
       verify "benchmark/bsort.gcl" 4 35
       it "mutations fail for N=4" $
-        (=<<) (`shouldSatisfy` all isRight) $
+        (=<<) (`shouldSatisfy` all isJust) $
         fmap (take 4) $
         -- line 12. "k<" -> "k<=". harmless because of "m := #a-1 ;"
         fmap (drop 1) $
@@ -65,7 +65,7 @@ spec = do
   where
     verify program nSubstitute searchDepth =
       it ("verifies for N=" ++ show nSubstitute) $
-        (`shouldReturn` Left Certain) $
+        (`shouldReturn` Nothing) $
         fmap (boundedVerification searchDepth True) $
         fmap (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
         fmap Gcl.fromParseResult $
@@ -77,7 +77,7 @@ verifyMutations ::
   FilePath ->
   Integer ->
   Integer ->
-  IO ([Either Certainty (HashMap Identifier Value)])
+  IO [Maybe (HashMap Identifier Value)]
 verifyMutations file nSubstitute searchDepth =
   (fmap . fmap) (boundedVerification searchDepth True) $
   (fmap . fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $

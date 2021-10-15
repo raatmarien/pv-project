@@ -3,7 +3,7 @@ module Tree where
 import Gcl (Expression (Negation), Expression (BoolLiteral), renameUnfolding)
 import Gcl qualified
 import Path qualified
-import SymbolicExecution (Certainty (Certain), counterExample)
+import SymbolicExecution (counterExample)
 
 import Data.Sequence qualified as S
 import Std hiding (Type)
@@ -125,7 +125,7 @@ prunePathByFeasibility statements rest@(Bifurcation _ _ _ _) =
         [Path.Assert $ BoolLiteral $ False]
       )
   of
-    Left Certain -> Nothing
+    Nothing -> Nothing
     _ -> (statements,) <$> pruneByFeasibility rest
   where
     isNotAssert (Path.Assert _) = False

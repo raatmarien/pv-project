@@ -52,10 +52,6 @@ data Z3Array =
 
 type SymbolicExpression = ReaderT Environment Z3 AST
 
-data Certainty =
-  Certain | Uncertain
-  deriving (Show, Eq)
-
 data Value =
   Integer Integer |
   Bool Bool |
@@ -64,7 +60,7 @@ data Value =
   deriving (Show, Eq)
 
 counterExample ::
-  [Path.Statement] -> Either Certainty (HashMap Identifier Value)
+  [Path.Statement] -> Maybe (HashMap Identifier Value)
 counterExample statements =
   unsafePerformIO $
   evalZ3 $
@@ -113,10 +109,10 @@ counterExample statements =
                   evalBool model =<< mkSelect z3Array =<< mkInteger index
                 )
                 indexes
-    parseZ3Result :: (Show a) => (Result, Maybe a) -> Either Certainty a
-    parseZ3Result (Sat, Just a) = Right a
-    parseZ3Result (Unsat, Nothing) = Left Certain
-    parseZ3Result (Undef, Nothing) = Left Uncertain
+    parseZ3Result :: (Show a) => (Result, Maybe a) -> Maybe a
+    parseZ3Result (Sat, Just a) = Just a
+    parseZ3Result (Unsat, Nothing) = Nothing
+    parseZ3Result (Undef, Nothing) = error "Is Z3's result ever undefined?"
     parseZ3Result result = error ("unsound Z3 result: " <> show result)
 
 -- to-do. rewrite as foldr for better performance

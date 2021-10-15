@@ -1,13 +1,13 @@
 module RunFunctions where
 
-import BoundedVerification (boundedVerification, mergeResults, parse)
+import BoundedVerification (boundedVerification, parse)
 import GCLUtils (mutateProgram)
 import Gcl (Type (PType), PrimitiveType (PTBool), Expression (IntegerLiteral), Identifier)
 import Gcl qualified
 import Path qualified
 import Tree (Tree (Empty))
 import Tree qualified
-import SymbolicExecution (Value, Certainty (Certain), counterExample, symbolifyPath)
+import SymbolicExecution (Value, counterExample, symbolifyPath)
 
 import Data.Sequence qualified as S
 import Std
@@ -17,7 +17,7 @@ withoutMutations ::
   Integer ->
   Integer ->
   Bool ->
-  IO (Either Certainty (HashMap Identifier Value))
+  IO (Maybe (HashMap Identifier Value))
 withoutMutations file nSubstitute searchDepth prune =
   fmap (boundedVerification searchDepth prune) $
   fmap (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
@@ -31,7 +31,7 @@ withMutations ::
   Integer ->
   Integer ->
   Bool ->
-  IO ([Either Certainty (HashMap Identifier Value)])
+  IO [Maybe (HashMap Identifier Value)]
 withMutations file nSubstitute searchDepth prune =
   (fmap . fmap) (boundedVerification searchDepth prune) $
   (fmap . fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
