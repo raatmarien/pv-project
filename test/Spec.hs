@@ -3,8 +3,8 @@
   -Wno-unused-imports
 #-}
 
-import BoundedVerification (boundedVerification, mergeResults)
-import GCLUtils (parseGCLstring, mutateProgram)
+import BoundedVerification (boundedVerification, mergeResults, parse)
+import GCLUtils (mutateProgram)
 import Gcl (Type (PType), PrimitiveType (PTBool), Expression (IntegerLiteral), Identifier)
 import Gcl qualified
 import Path qualified
@@ -22,15 +22,16 @@ import Text.RawString.QQ (r)
 import System.IO.Unsafe (unsafePerformIO)
 import Z3.Monad
 import Std
+import Relude.Unsafe qualified as U
 
 spec :: Spec
 spec = do
   describe "renaming" $ do
     it "works" $
       (
-        fmap Gcl.rename $
-        (=<<) Gcl.fromParseResult $
-        parseGCLstring $
+        Gcl.rename $
+        Gcl.fromParseResult $
+        parse $
         [r|
           f(a:bool | b:bool) {
             var a:bool {
@@ -47,30 +48,53 @@ spec = do
       `shouldSatisfy`
       renamedCorrectly
   describe "examples" $ do
-    verify "memberOf.gcl" 4 30
-    verify "divByN.gcl" 3 50
-    verify "pullUp.gcl" 5 100
-    verify "bsort.gcl" 4 32
-  where
-    verify program n k = describe program $ do
-      it ("verifies for N=" ++ (show n)) $
-        withoutMutations ("test/examples/benchmark/" ++ program) n k
-        `shouldReturn`
-        Right (Left Certain)
-      it ("mutations fail for N=" ++ show n) $
+    describe "bsort" $ do
+      verify "benchmark/bsort.gcl" 4 35
+      it "mutations fail for N=4" $
         (=<<) (`shouldSatisfy` all isRight) $
         fmap (take 4) $
-        (withMutations ("test/examples/benchmark/" ++ program) n k)
+        -- line 12. "k<" -> "k<=". harmless because of "m := #a-1 ;"
+        fmap (drop 1) $
+        verifyMutations "benchmark/bsort.gcl" 4 35
+    describe "memberOf" $ do
+      verify "benchmark/memberOf.gcl" 4 30
+    describe "divByN" $ do
+      verify "benchmark/divByN.gcl" 3 40
+    describe "pullUp" $ do
+      verify "benchmark/pullUp.gcl" 5 30
+  where
+    verify program nSubstitute searchDepth =
+      it ("verifies for N=" ++ show nSubstitute) $
+        (`shouldReturn` Left Certain) $
+        fmap (boundedVerification searchDepth True) $
+        fmap (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
+        fmap Gcl.fromParseResult $
+        fmap parse $
+        fmap decodeUtf8 $
+        readFileBS ("test/examples/" <> program)
+
+verifyMutations ::
+  FilePath ->
+  Integer ->
+  Integer ->
+  IO ([Either Certainty (HashMap Identifier Value)])
+verifyMutations file nSubstitute searchDepth =
+  (fmap . fmap) (boundedVerification searchDepth True) $
+  (fmap . fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
+  (fmap . fmap) Gcl.fromParseResult $
+  (fmap . fmap) snd $
+  fmap mutateProgram $
+  fmap parse $
+  fmap decodeUtf8 $
+  readFileBS ("test/examples/" <> file)
 
 
--- -- $> pPrintLightBg =<< withoutMutations "test/examples/benchmark/bsort.gcl" 4 32
-
--- -- $> pPrintLightBg =<< withMutations "test/examples/benchmark/bsort.gcl" 4 32
+-- -- $> (=<<) pPrintLightBg $ fmap (U.!! 5) $ (fmap . fmap) isRight $ verifyMutations "benchmark/bsort.gcl" 4 45
 
 adHocTest :: IO ()
 adHocTest =
   (=<<) pPrintLightBg $
-  (fmap . fmap)
+  fmap
     (
       length .
       -- (foldr mergeResults (Left Certain)) . -- short circuit
@@ -86,41 +110,48 @@ adHocTest =
       Gcl.addIndexingAssertions .
       Gcl.rename
     ) $
-  (fmap . fmap) (Gcl.instantiateN $ IntegerLiteral 3) $
+  fmap (Gcl.instantiateN $ IntegerLiteral 3) $
   fmap Gcl.fromParseResult $
-  fmap (fromRight $ error "not testing the parser") $
-  fmap parseGCLstring $
+  fmap parse $
   fmap decodeUtf8 $
   readFileBS "test/examples/benchmark/divByN.gcl"
 
 -- -- $> adHocTest
 
-renamedCorrectly :: Either String [Gcl.Statement] -> Bool
+printMutation :: IO ()
+printMutation =
+  (=<<) pPrintLightBg $
+  fmap snd $
+  fmap (U.!! 0) $
+  fmap mutateProgram $
+  fmap parse $
+  fmap decodeUtf8 $
+  readFileBS ("test/examples/benchmark/bsort.gcl")
+
+renamedCorrectly :: [Gcl.Statement] -> Bool
 renamedCorrectly
-  (Right
-    [
-      Gcl.Declarations
-        (
-          (a0, PType PTBool) :|
-          (b0, PType PTBool) :
-          []
-        )
-        [
-          Gcl.Declarations
-            ((a1, PType PTBool) :| [])
-            [
-              Gcl.Assert (Gcl.Variable a2),
-              Gcl.Assert (Gcl.Variable b1)
-            ],
-          Gcl.Assert (Gcl.Variable a3),
-          Gcl.Declarations
-            ((a4, PType PTBool) :| [])
-            [
-              Gcl.Assert (Gcl.Variable a5)
-            ]
-        ]
-    ]
-  )
+  [
+    Gcl.Declarations
+      (
+        (a0, PType PTBool) :|
+        (b0, PType PTBool) :
+        []
+      )
+      [
+        Gcl.Declarations
+          ((a1, PType PTBool) :| [])
+          [
+            Gcl.Assert (Gcl.Variable a2),
+            Gcl.Assert (Gcl.Variable b1)
+          ],
+        Gcl.Assert (Gcl.Variable a3),
+        Gcl.Declarations
+          ((a4, PType PTBool) :| [])
+          [
+            Gcl.Assert (Gcl.Variable a5)
+          ]
+      ]
+  ]
   =
     a0 != a1 &&
     a0 != a4 &&
@@ -131,58 +162,12 @@ renamedCorrectly
     a1 != a4
 renamedCorrectly _ = False
 
-withoutMutations ::
-  String ->
-  Integer ->
-  Integer ->
-  IO (Either String (Either Certainty (HashMap Identifier Value)))
-withoutMutations file nSubstitute searchDepth =
-  (fmap . fmap) (boundedVerification searchDepth True) $
-  (fmap . fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
-  fmap Gcl.fromParseResult $
-  fmap (fromRight $ error "not testing the parser") $
-  fmap parseGCLstring $
-  fmap decodeUtf8 $
-  readFileBS file
-
-withMutations ::
-  String ->
-  Integer ->
-  Integer ->
-  IO ([Either String (Either Certainty (HashMap Identifier Value))])
-withMutations file nSubstitute searchDepth =
-  (fmap . fmap . fmap) (boundedVerification searchDepth True) $
-  (fmap . fmap . fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
-  (fmap . fmap) Gcl.fromParseResult $
-  (fmap . fmap) snd $
-  fmap mutateProgram $
-  fmap (fromRight $ error "not testing the parser") $
-  fmap parseGCLstring $
-  fmap decodeUtf8 $
-  readFileBS file
-
 symbolifyAndShow ::
   [Path.Statement] -> String
 symbolifyAndShow statements =
   unsafePerformIO $ evalZ3 $ do
     (z3Ast, _) <- symbolifyPath statements
     astToString z3Ast
-    
--- test :: IO ()
--- test =
---   (=<<) pPrintLightBg $
---   (fmap . fmap) (boundedVerification 33) $
---   fmap decodeUtf8Strict $
---   readFileBS "test/examples/benchmark/bsort.gcl"
--- -- double free or corruption (!prev)
--- -- Aborted (core dumped)
-
--- -- double free or corruption (out)
--- -- Aborted (core dumped)
-
--- -- Segmentation fault (core dumped)
-
--- -- Rightbounded-verification-exe: Z3 error: select requires 0 arguments, but was provided with 2 arguments
 
 main :: IO ()
 main = hspec spec
@@ -192,4 +177,4 @@ hspecProgress spec =
   evaluateSummary
     =<< runSpec spec (defaultConfig {configFormatter = Just progress})
 
--- $> hspecProgress spec
+-- -- $> hspecProgress spec

@@ -51,9 +51,11 @@ deriving instance Data Type
 deriving instance Data BinOp
 deriving instance Data PrimitiveType
 
-fromParseResult :: Parse.Program -> Either String [Statement]
+fromParseResult :: Parse.Program -> [Statement]
 fromParseResult (Parse.Program _name input output programParsed) =
-  parametersToDeclarations <$> fromParsedProgram programParsed
+  either (error . toText) id $
+  fmap parametersToDeclarations $
+  fromParsedProgram programParsed
   where
     parametersToDeclarations :: [Statement] -> [Statement]
     parametersToDeclarations =

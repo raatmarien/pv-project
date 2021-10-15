@@ -1,7 +1,7 @@
 module RunFunctions where
 
-import BoundedVerification (boundedVerification, mergeResults)
-import GCLUtils (parseGCLstring, mutateProgram)
+import BoundedVerification (boundedVerification, mergeResults, parse)
+import GCLUtils (mutateProgram)
 import Gcl (Type (PType), PrimitiveType (PTBool), Expression (IntegerLiteral), Identifier)
 import Gcl qualified
 import Path qualified
@@ -13,43 +13,41 @@ import Data.Sequence qualified as S
 import Std
 
 withoutMutations ::
-  String ->
+  FilePath ->
   Integer ->
   Integer ->
   Bool ->
-  IO (Either String (Either Certainty (HashMap Identifier Value)))
+  IO (Either Certainty (HashMap Identifier Value))
 withoutMutations file nSubstitute searchDepth prune =
-  (fmap . fmap) (boundedVerification searchDepth prune) $
-  (fmap . fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
+  fmap (boundedVerification searchDepth prune) $
+  fmap (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
   fmap Gcl.fromParseResult $
-  fmap (fromRight $ error "not testing the parser") $
-  fmap parseGCLstring $
+  fmap parse $
   fmap decodeUtf8 $
   readFileBS file
 
 withMutations ::
-  String ->
+  FilePath ->
   Integer ->
   Integer ->
   Bool ->
-  IO ([Either String (Either Certainty (HashMap Identifier Value))])
+  IO ([Either Certainty (HashMap Identifier Value)])
 withMutations file nSubstitute searchDepth prune =
-  (fmap . fmap . fmap) (boundedVerification searchDepth prune) $
-  (fmap . fmap . fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
+  (fmap . fmap) (boundedVerification searchDepth prune) $
+  (fmap . fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
   (fmap . fmap) Gcl.fromParseResult $
   (fmap . fmap) snd $
   fmap mutateProgram $
-  fmap (fromRight $ error "not testing the parser") $
-  fmap parseGCLstring $
+  fmap parse $
   fmap decodeUtf8 $
   readFileBS file
 
-verifyProgram :: String -> Integer -> Integer -> Bool -> IO ()
+verifyProgram :: FilePath -> Integer -> Integer -> Bool -> IO ()
 verifyProgram program n k prune = do
   result <- withoutMutations program n k prune
   print result
 
-runMutateProgram :: String -> Integer -> Integer -> Bool -> IO ()
+runMutateProgram :: FilePath -> Integer -> Integer -> Bool -> IO ()
 runMutateProgram program n k prune = do
   result <- withMutations program n k prune
   print result

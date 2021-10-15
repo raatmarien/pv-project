@@ -7,7 +7,12 @@ import Tree qualified
 import SymbolicExecution (Certainty (Uncertain, Certain), Value)
 import SymbolicExecution qualified
 
+import GCLUtils (parseGCLstring)
+import GCLParser.GCLDatatype qualified as Parse
 import Std
+
+parse :: String -> Parse.Program
+parse = either (error . toText) id . parseGCLstring
 
 boundedVerification ::
   Integer ->
