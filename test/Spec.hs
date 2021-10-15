@@ -97,14 +97,14 @@ adHocTest =
   fmap
     (
       length .
-      -- (foldr mergeResults (Left Certain)) . -- short circuit
+      -- foldr (<|>) Nothing . -- short circuit
       -- fmap SymbolicExecution.counterExample .
       Tree.leaves .
-      -- (fromMaybe Empty) .
+      -- fromMaybe Empty .
       -- Tree.pruneByFeasibility .
       Tree.pathsTree .
-      (fromMaybe Empty) .
-      (Tree.pruneByLength 50) .
+      fromMaybe Empty .
+      Tree.pruneByLength 50 .
       Tree.statementTree .
       Gcl.addArrayAssignAssertions .
       Gcl.addIndexingAssertions .

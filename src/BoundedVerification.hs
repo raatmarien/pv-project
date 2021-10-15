@@ -23,12 +23,12 @@ boundedVerification searchDepth prune =
   foldr (<|>) Nothing . -- short circuit
   fmap SymbolicExecution.counterExample .
   Tree.leaves .
-  (if prune then ((fromMaybe Empty) .
+  (if prune then (fromMaybe Empty .
                   Tree.pruneByFeasibility)
    else id) .
   Tree.pathsTree .
-  (fromMaybe Empty) .
-  (Tree.pruneByLength searchDepth) .
+  fromMaybe Empty .
+  Tree.pruneByLength searchDepth .
   Tree.statementTree .
   Gcl.addArrayAssignAssertions .
   Gcl.addIndexingAssertions .

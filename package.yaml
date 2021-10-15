@@ -41,6 +41,9 @@ default-extensions:
 - QuasiQuotes
 - DeriveFunctor
 - PartialTypeSignatures
+- DataKinds
+- TypeOperators
+- FlexibleInstances
 
 library:
   source-dirs: src

@@ -1,10 +1,9 @@
-- arrays
-  - insert assertions
-    - array assign
-    - indexing
-    - indexing inside assertions and assumptions too but potentially under quantifiers
-- renaming inside quantifiers
+- merge RunFunctions into BoundedVerification
+- renaming quantifier variables
+- insert assertsions for array indexing inside assertions and assumptions
+  too but potentially under quantifiers
 - seperate evaluatable expressions from logical ones?
+- branch z3_seg_fault
 - optimizations
   - Data.Sequence
   - conjunctive normal form
@@ -12,3 +11,4 @@
   - z3's substitute
   - single huge z3 ast
   - bit vector instead of integer
+  - parallelize

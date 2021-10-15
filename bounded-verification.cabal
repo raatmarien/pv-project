@@ -50,6 +50,9 @@ library
       QuasiQuotes
       DeriveFunctor
       PartialTypeSignatures
+      DataKinds
+      TypeOperators
+      FlexibleInstances
   ghc-options: -O0 -Wall -Wno-name-shadowing
   build-depends:
       GCLparser
@@ -81,6 +84,9 @@ executable bounded-verification-exe
       QuasiQuotes
       DeriveFunctor
       PartialTypeSignatures
+      DataKinds
+      TypeOperators
+      FlexibleInstances
   ghc-options: -O0 -Wall -Wno-name-shadowing -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
@@ -109,6 +115,9 @@ test-suite bounded-verification-test
       QuasiQuotes
       DeriveFunctor
       PartialTypeSignatures
+      DataKinds
+      TypeOperators
+      FlexibleInstances
   ghc-options: -O0 -Wall -Wno-name-shadowing -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       GCLparser
