@@ -9,6 +9,7 @@ import Tree (Tree (Empty))
 import Tree qualified
 import SymbolicExecution (Value, counterExample, symbolifyPath)
 
+import Criterion.Main
 import Data.Sequence qualified as S
 import Std
 
@@ -18,13 +19,28 @@ withoutMutations ::
   Integer ->
   Bool ->
   IO (Maybe (HashMap Identifier Value))
-withoutMutations file nSubstitute searchDepth prune =
-  fmap (boundedVerification searchDepth prune) $
-  fmap (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
-  fmap Gcl.fromParseResult $
-  fmap parse $
-  fmap decodeUtf8 $
-  readFileBS file
+withoutMutations file nSubstitute searchDepth prune = do
+  content <- readFileBS file
+  let parsed = Gcl.fromParseResult $ parse $ decodeUtf8 content
+      withN = Gcl.instantiateN (IntegerLiteral nSubstitute) parsed
+      result = boundedVerification searchDepth prune withN
+  return result
+
+verificationBenchmark ::
+  FilePath ->
+  Integer ->
+  Integer ->
+  Bool ->
+  IO Benchmark
+verificationBenchmark file nSubstitute searchDepth prune = do
+  content <- readFileBS file
+  let parsed = Gcl.fromParseResult $ parse $ decodeUtf8 content
+      withN = Gcl.instantiateN (IntegerLiteral nSubstitute) parsed
+      resultF = \n -> isJust (boundedVerification searchDepth prune n)
+      benchmarkable = nf resultF withN
+      descr = "Verifying " ++ file ++ (if prune then " with pruning "
+                                       else " without pruning ")
+  return $ bench descr benchmarkable
 
 withMutations ::
   FilePath ->

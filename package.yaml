@@ -54,6 +54,7 @@ library:
   - containers
   - lens
   - GCLparser
+  - criterion
 
 executables:
   bounded-verification-exe:
@@ -66,6 +67,7 @@ executables:
     dependencies:
     - bounded-verification
     - optparse-generic
+    - criterion
 
 tests:
   bounded-verification-test:
