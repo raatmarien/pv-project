@@ -184,9 +184,10 @@ renameStatement =
 renameIdentifier :: (Data s) => Integer -> Identifier -> s -> s
 renameIdentifier id identifier =
   let
-    go identifierCurrent@(Identifier identifierTextCurrent _ iterationId)
-      | identifierCurrent == identifier =
-        Identifier identifierTextCurrent id iterationId
+    go identifierCurrent@(Identifier identifierTextCurrent idOld iterationId)
+      | identifierCurrent == identifier,
+        idOld != (-2) -- generated identifiers inaccessible to the user
+        = Identifier identifierTextCurrent id iterationId
       | otherwise = identifierCurrent
   in over template go
 
