@@ -1,6 +1,6 @@
 module Std (module Std, module Relude, module Relude.Extra.Foldable1) where
 
-import Relude
+import Relude hiding (intercalate)
 import Relude.Extra.Foldable1
 
 (!=) :: (Eq a) => a -> a -> Bool
@@ -28,3 +28,6 @@ bind2 f a b = uncurry f =<< liftA2 (,) a b
 
 fromTo :: (Enum a) => a -> a -> [a]
 fromTo lower upper = enumFromTo lower (pred upper)
+
+intercalate :: (Monoid a) => a -> [a] -> a
+intercalate = fold .: intersperse

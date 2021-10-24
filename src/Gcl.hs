@@ -76,8 +76,8 @@ fromParsedProgram program =
         Assign (Identifier identifier (-1) 0)
           <$> fromParsedExpression expression
     Parse.AAssign identifier index expression ->
-      fmap pure
-        $ AssignArray (Identifier identifier (-1) 0)
+      fmap pure $
+        AssignArray (Identifier identifier (-1) 0)
           <$> fromParsedExpression index
           <*> fromParsedExpression expression
     Parse.DrefAssign {} -> Left "references not implemented"

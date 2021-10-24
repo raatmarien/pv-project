@@ -310,8 +310,8 @@ environmentLookup ::
   (Monad m) =>
   Identifier -> ReaderT Environment m (Either Z3Primitive Z3Array)
 environmentLookup identifier@(Identifier identifierString _ _) =
-  reader
-    $ \(Environment environment) ->
+  reader $
+    \(Environment environment) ->
       case HM.lookup identifier environment of
         Nothing -> error ("unknown identifier " <> toText identifierString)
         Just z3Ast -> bimap current current z3Ast
