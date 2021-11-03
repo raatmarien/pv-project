@@ -14,3 +14,13 @@
   - single huge z3 ast
   - bit vector instead of integer
   - parallelize
+
+
+priority:
+    1. benchmarks
+    2. paper
+    3. another optional
+    4. optimization?
+    5. z3 bug?
+    
+    
