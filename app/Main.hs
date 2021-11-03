@@ -5,6 +5,7 @@ import RunFunctions
 
 import qualified System.Environment as S
 import Criterion.Main  
+import Criterion.Types
 import Options.Generic
 
 data Options w = Options
@@ -29,10 +30,16 @@ runProgram options =
 
 benchmarkProgram :: (Options Unwrapped) -> IO ()
 benchmarkProgram options = do
-  b <- verificationBenchmark (program options) (n options)
-          (k options) (not $ disableOptimizations options)
-  let newMain = defaultMainWith defaultConfig [
-        bgroup "verification" [b]
+  let createVerificationBenchmark (n', k', prune)
+        = verificationBenchmark name (program options) n' k' prune
+        where name = (show n') ++ "," ++ (show k') ++ ","
+                     ++ (if prune then "1" else "0")
+      benchOptions = [(n', k', prune) | n' <- [2..(n options)], k' <- [5, 10..(k options)]
+                                      , prune <- [True, False]]
+  benchmarks <- mapM createVerificationBenchmark benchOptions
+  let config = defaultConfig { csvFile = Just "benchmarkoutput.csv" }
+      newMain = defaultMainWith config [
+        bgroup "verification" benchmarks
         ]
   S.withArgs [] newMain
 
