@@ -1,10 +1,11 @@
+- bug
+  - branch z3_new
+  - 63878b1
 - merge RunFunctions into BoundedVerification
 - renaming quantifier variables
-- insert assertions for array indexing that the index is not less than zero
 - insert assertions for array indexing inside assertions and assumptions
   too but potentially under quantifiers
 - seperate evaluatable expressions from logical ones?
-- branch z3_seg_fault
 - optimizations
   - Data.Sequence
   - conjunctive normal form
