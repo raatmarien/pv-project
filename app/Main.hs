@@ -34,7 +34,8 @@ benchmarkProgram options = do
         = verificationBenchmark name (program options) n' k' prune
         where name = (show n') ++ "," ++ (show k') ++ ","
                      ++ (if prune then "1" else "0")
-      benchOptions = [(n', k', prune) | n' <- [2..(n options)], k' <- [5, 10..(k options)]
+      benchOptions = [(n', k', prune) | n' <- [2..(n options)]
+                                      , k' <- [10, 20..(k options)]
                                       , prune <- [True, False]]
   benchmarks <- mapM createVerificationBenchmark benchOptions
   let config = defaultConfig { csvFile = Just "benchmarkoutput.csv" }
