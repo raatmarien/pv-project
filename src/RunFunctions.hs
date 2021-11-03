@@ -27,20 +27,19 @@ withoutMutations file nSubstitute searchDepth prune = do
   return result
 
 verificationBenchmark ::
+  String ->
   FilePath ->
   Integer ->
   Integer ->
   Bool ->
   IO Benchmark
-verificationBenchmark file nSubstitute searchDepth prune = do
+verificationBenchmark name file nSubstitute searchDepth prune = do
   content <- readFileBS file
   let parsed = Gcl.fromParseResult $ parse $ decodeUtf8 content
       withN = Gcl.instantiateN (IntegerLiteral nSubstitute) parsed
       resultF = \n -> isJust (boundedVerification searchDepth prune n)
       benchmarkable = nf resultF withN
-      descr = "Verifying " ++ file ++ (if prune then " with pruning "
-                                       else " without pruning ")
-  return $ bench descr benchmarkable
+  return $ bench name benchmarkable
 
 withMutations ::
   FilePath ->
