@@ -62,6 +62,8 @@ spec = do
       verify "benchmark/divByN.gcl" 3 40
     describe "pullUp" $ do
       verify "benchmark/pullUp.gcl" 5 30
+    describe "min" $ do
+      verify "benchmark/min.gcl" 3 25
   where
     verify program nSubstitute searchDepth =
       it ("verifies for N=" ++ show nSubstitute) $
@@ -177,4 +179,4 @@ hspecProgress spec =
   evaluateSummary
     =<< runSpec spec (defaultConfig {configFormatter = Just progress})
 
--- -- $> hspecProgress spec
+-- $> hspecProgress spec

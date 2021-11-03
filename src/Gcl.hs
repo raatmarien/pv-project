@@ -21,6 +21,7 @@ data Statement =
   Assume Expression |
   Assign Identifier Expression |
   AssignArray Identifier Expression Expression |
+  AppendArray Identifier Expression |
   If Expression [Statement] [Statement] |
   While Expression [Statement] |
   Declarations (NonEmpty (Identifier, Type)) [Statement]
@@ -63,6 +64,11 @@ fromParseResult (Parse.Program _name input output programParsed) =
         Nothing -> id
         Just d -> pure . Declarations d
 
+
+heapId :: Identifier
+heapId = Identifier "heap" (-2) 0
+
+
 fromParsedProgram :: Parse.Stmt -> Either String [Statement]
 fromParsedProgram program =
   case program of
@@ -71,6 +77,12 @@ fromParsedProgram program =
       fmap pure $ Assert <$> fromParsedExpression expression
     Parse.Assume expression ->
       fmap pure $ Assume <$> fromParsedExpression expression
+    Parse.Assign identifier (Parse.NewStore expression) ->
+      sequence [
+        return $ Assign (Identifier identifier (-1) 0) (ArrayLength heapId),
+        AppendArray heapId
+          <$> fromParsedExpression expression
+      ]
     Parse.Assign identifier expression ->
       fmap pure $
         Assign (Identifier identifier (-1) 0)
@@ -80,7 +92,11 @@ fromParsedProgram program =
         AssignArray (Identifier identifier (-1) 0)
           <$> fromParsedExpression index
           <*> fromParsedExpression expression
-    Parse.DrefAssign {} -> Left "references not implemented"
+    Parse.DrefAssign identifier expression ->
+      fmap pure $
+        AssignArray heapId
+          <$> fromParsedExpression (Parse.Var identifier)
+          <*> fromParsedExpression expression
     Parse.Seq program0 program1 ->
       (<>) <$> fromParsedProgram program0 <*> fromParsedProgram program1
     Parse.IfThenElse guard branch0 branch1 ->
@@ -108,7 +124,7 @@ fromParsedExpression =
     Parse.LitI integer ->
       Right $ IntegerLiteral $ fromIntegral $ integer
     Parse.LitB bool -> Right $ BoolLiteral $ bool
-    Parse.LitNull -> Left "references not implemented"
+    Parse.LitNull -> Right $ IntegerLiteral (-1)
     Parse.Parens expression -> fromParsedExpression expression
     Parse.ArrayElem (Parse.Var identifier) index ->
       Indexing
@@ -131,8 +147,13 @@ fromParsedExpression =
     Parse.SizeOf _ -> Left "apply length operators to variables only"
     Parse.RepBy {} -> Left "no `RepBy`s"
     Parse.Cond {} -> Left "no `Cond`s"
-    Parse.NewStore {} -> Left "references not implemented"
-    Parse.Dereference {} -> Left "references not implemented"
+    Parse.NewStore {} -> Left "NewStore should be intercepted in fromParsedProgram"
+    Parse.Dereference identifier -> 
+      Indexing
+        heapId
+        <$> fromParsedExpression (Parse.Var identifier)
+    Parse.Dereference _ -> Left "only dereference variables"
+    
 
 fromParsedDeclarations ::
   [Parse.VarDeclaration] -> Maybe (NonEmpty (Identifier, Type))
@@ -259,6 +280,7 @@ addIndexingAssertions (statement : statementsRest) =
       Declarations declarations (addIndexingAssertions statements)
       :
       addIndexingAssertions statementsRest
+    appendArray@(AppendArray {}) -> appendArray : addIndexingAssertions statementsRest
 
 addIndexingAssertionsExpression :: Expression -> Seq Statement
 addIndexingAssertionsExpression =
@@ -290,6 +312,7 @@ addArrayAssignAssertions (statement : statementsRest) =
     assert@(Assert {}) -> assert : addArrayAssignAssertions statementsRest
     assume@(Assume {}) -> assume : addArrayAssignAssertions statementsRest
     assign@(Assign {}) -> assign : addArrayAssignAssertions statementsRest
+    appendArray@(AppendArray {}) -> appendArray : addArrayAssignAssertions statementsRest
     assignArray@(AssignArray identifier index _expression) ->
       indexAssertion identifier index :
       assignArray :
@@ -378,3 +401,7 @@ instantiateNExpression substitute =
   where
     replaceN (Identifier "N" (-1) 0) = substitute
     replaceN identifier = Variable identifier
+
+
+makeHeap :: [Statement] -> [Statement]
+makeHeap = pure . Declarations ((heapId, AType PTInt) :| [])

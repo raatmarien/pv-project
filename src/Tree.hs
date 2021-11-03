@@ -30,6 +30,8 @@ statementTree (statement : statementsRest) =
       Path
         (Path.AssignArray identifier index expression)
         (statementTree statementsRest)
+    Gcl.AppendArray identifier expression ->
+      Path (Path.AppendArray identifier expression) (statementTree statementsRest)
     Gcl.Declarations declarations statements ->
       foldr1 (.) (uncurry (Path .: Path.Declaration) <$> declarations)
         $ statementTree (statements <> statementsRest)

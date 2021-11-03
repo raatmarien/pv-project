@@ -9,5 +9,6 @@ data Statement =
   Assume Expression |
   Assign Identifier Expression |
   AssignArray Identifier Expression Expression |
+  AppendArray Identifier Expression |
   Declaration Identifier Type
   deriving (Show)

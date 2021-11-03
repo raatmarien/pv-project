@@ -153,6 +153,26 @@ symbolifyPath statementsAll =
             modify
               (environmentUpdate identifier (Right $ Z3Array z3ArrayNew length))
             go statementsRest
+        Path.AppendArray identifier expression ->
+          do
+            Z3Array z3ArrayOld length <-
+              fmap
+                (fromRight
+                  $ error "could not match expected array type with actual primtive type"
+                ) $
+              (liftReaderT (environmentLookup identifier) =<< get)
+            
+            z3ArrayNew <-
+              bind2 (lift .: mkStore z3ArrayOld)
+                (return length)
+                (liftReaderT (symbolifyExpression expression) =<< get)
+
+            length' <- lift $ mkAdd =<< sequence [return length, mkInteger 1]
+            
+            modify
+              (environmentUpdate identifier (Right $ Z3Array z3ArrayNew length'))
+
+            go statementsRest
         Path.Declaration identifier@(Identifier identifierString _ _) typ ->
           do
             z3Variable <-
@@ -173,7 +193,11 @@ symbolifyPath statementsAll =
                         =<< bind2 mkArraySort mkIntSort (z3Sort primitiveType)
                       )
                     <*> mkFreshIntVar ("#" <> identifierString)
-                RefType -> error "references not implemented"
+                RefType ->
+                  fmap Left $
+                  fmap (, PTInt) $
+                  fmap Z3Primitive $
+                  mkFreshConst identifierString =<< z3Sort PTInt
             modify (environmentInsert identifier z3Variable)
             go statementsRest
           where
@@ -245,7 +269,7 @@ symbolifyBinaryOperation operator expression0 expression1 =
         Or -> \a b -> mkOr [a, b]
         Implication -> mkImplies
         Equal -> mkEq
-        Alias -> error "no aliases"
+        Alias -> mkEq -- :)
 
 symbolifyIndexing :: Identifier -> SymbolicExpression -> SymbolicExpression
 symbolifyIndexing identifier expression =
