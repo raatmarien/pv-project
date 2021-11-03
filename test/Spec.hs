@@ -27,7 +27,7 @@ import Relude.Unsafe qualified as U
 spec :: Spec
 spec = do
   describe "examples" $ do
-      verify "benchmark/bsort.gcl" 4 35
+      verify "benchmark/bsort.gcl" 4 36
   where
     verify program nSubstitute searchDepth =
       it ("verifies for N=" ++ show nSubstitute) $

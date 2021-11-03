@@ -63,13 +63,18 @@ data Value =
 counterExample ::
   [Path.Statement] -> Maybe (HashMap Identifier Value)
 counterExample statements =
-  unsafePerformIO $
-  evalZ3 $
-  do
-    (z3Statements, Environment environment) <- symbolifyPath statements
-    assert =<< mkNot z3Statements
-    fmap parseZ3Result $ withModel $ \model ->
-      traverse (evaluate model) environment
+  unsafePerformIO $ do
+    x <- evalZ3 $ do 
+        (z3Statements, Environment environment) <- symbolifyPath statements
+        astToString =<< mkNot z3Statements
+
+    writeFile "dump.txt" x
+
+    evalZ3 $ do
+      (z3Statements, Environment environment) <- symbolifyPath statements
+      assert =<< mkNot z3Statements
+      fmap parseZ3Result $ withModel $ \model ->
+        traverse (evaluate model) environment
   where
     evaluate :: Model -> Z3Variable -> Z3 Value
     evaluate model (Left (_z3AstCurrent, Z3Primitive z3AstInitial, typ)) =
@@ -173,7 +178,7 @@ symbolifyPath statementsAll =
                         identifierString
                         =<< bind2 mkArraySort mkIntSort (z3Sort primitiveType)
                       )
-                    <*> mkFreshIntVar ("#" <> identifierString)
+                    <*> mkFreshIntVar ("z" <> identifierString)
                 RefType -> error "references not implemented"
             modify (environmentInsert identifier z3Variable)
             go statementsRest
