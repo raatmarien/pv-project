@@ -26,27 +26,7 @@ import Relude.Unsafe qualified as U
 
 spec :: Spec
 spec = do
-  describe "renaming" $ do
-    it "works" $
-      (
-        Gcl.rename $
-        Gcl.fromParseResult $
-        parse $
-        [r|
-          f(a:bool | b:bool) {
-            var a:bool {
-              assert a;
-              assert b
-            };
-            assert a;
-            var a:bool {
-              assert a
-            }
-          }
-        |]
-      )
-      `shouldSatisfy`
-      renamedCorrectly
+  --renameTest
   describe "examples" $ do
     describe "bsort" $ do
       verify "benchmark/bsort.gcl" 4 35
@@ -74,6 +54,30 @@ spec = do
         fmap parse $
         fmap decodeUtf8 $
         readFileBS ("test/examples/" <> program)
+
+renameTest :: Spec
+renameTest = describe "renaming" $ do
+    it "works" $
+      (
+        Gcl.rename $
+        Gcl.fromParseResult $
+        parse $
+        [r|
+          f(a:bool | b:bool) {
+            var a:bool {
+              assert a;
+              assert b
+            };
+            assert a;
+            var a:bool {
+              assert a
+            }
+          }
+        |]
+      )
+      `shouldSatisfy`
+      renamedCorrectly
+
 
 verifyMutations ::
   FilePath ->
