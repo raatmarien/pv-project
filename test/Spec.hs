@@ -5,12 +5,12 @@
 
 import BoundedVerification (boundedVerification, parse)
 import GCLUtils (mutateProgram)
-import Gcl (Type (PType), PrimitiveType (PTBool), Expression (IntegerLiteral), Identifier)
+import Gcl (Type (PType), PrimitiveType (PTBool), Expression (IntegerLiteral), Identifier (Identifier))
 import Gcl qualified
 import Path qualified
 import Tree (Tree (Empty))
 import Tree qualified
-import SymbolicExecution (Value, counterExample, symbolifyPath)
+import SymbolicExecution (Value, counterExample, symbolifyPath, Z3Variable, Z3Primitive (Z3Primitive), Z3Array (Z3Array))
 
 import Data.Sequence qualified as S
 import Test.Hspec
@@ -163,7 +163,10 @@ symbolifyAndShow statements =
     astToString z3Ast
 
 main :: IO ()
-main = hspec spec
+
+-- main = hspec spec
+main = print =<< counterExample
+  [Path.Declaration (Identifier "a" 3 0) (Gcl.AType Gcl.PTInt),Path.Declaration (Identifier "b" 3 0) (Gcl.AType Gcl.PTInt),Path.Assume (Gcl.BinaryOperation Gcl.And (Gcl.BinaryOperation Gcl.GreaterThanEqual (Gcl.ArrayLength (Identifier "a" 3 0)) (IntegerLiteral 0)) (Gcl.BinaryOperation Gcl.GreaterThanEqual (Gcl.ArrayLength (Identifier "a" 3 0)) (IntegerLiteral 4))),Path.Declaration (Identifier "k" 2 0) (PType Gcl.PTInt),Path.Assign (Identifier "k" 2 0) (IntegerLiteral 0),Path.Assume (Gcl.BinaryOperation Gcl.LessThan (Gcl.Variable (Identifier "k" 2 0)) (Gcl.ArrayLength (Identifier "a" 3 0))),Path.Declaration (Identifier "m" 1 0) (PType Gcl.PTInt),Path.Declaration (Identifier "tmp" 1 0) (PType Gcl.PTInt),Path.Assign (Identifier "m" 1 0) (Gcl.BinaryOperation Gcl.Minus (Gcl.ArrayLength (Identifier "a" 3 0)) (IntegerLiteral 1)),Path.Assume (Gcl.BinaryOperation Gcl.LessThan (Gcl.Variable (Identifier "k" 2 0)) (Gcl.Variable (Identifier "m" 1 0))),Path.Assume (Gcl.Negation (Gcl.BinaryOperation Gcl.LessThan  (Gcl.Indexing (Identifier "a" 3 0) (Gcl.Variable (Identifier "m" 1 0))) (Gcl.Indexing (Identifier "a" 3 0) (Gcl.BinaryOperation Gcl.Minus (Gcl.Variable (Identifier "m" 1 0)) (IntegerLiteral 1))))),Path.Assign (Identifier "m" 1 0) (Gcl.BinaryOperation Gcl.Minus (Gcl.Variable (Identifier "m" 1 0)) (IntegerLiteral 1)),Path.Assume (Gcl.BinaryOperation Gcl.LessThan (Gcl.Variable (Identifier "k" 2 0)) (Gcl.Variable (Identifier "m" 1 0))),Path.Assume (Gcl.Negation (Gcl.BinaryOperation Gcl.LessThan (Gcl.Indexing (Identifier "a" 3 0) (Gcl.Variable (Identifier "m" 1 0))) (Gcl.Indexing (Identifier "a" 3 0) (Gcl.BinaryOperation Gcl.Minus (Gcl.Variable (Identifier "m" 1 0)) (IntegerLiteral 1))))),Path.Assign (Identifier "m" 1 0) (Gcl.BinaryOperation Gcl.Minus (Gcl.Variable (Identifier "m" 1 0)) (IntegerLiteral 1)),Path.Assume (Gcl.BinaryOperation Gcl.LessThan (Gcl.Variable (Identifier "k" 2 0)) (Gcl.Variable (Identifier "m" 1 0))),Path.Assume (Gcl.Negation (Gcl.BinaryOperation Gcl.LessThan (Gcl.Indexing (Identifier "a" 3 0) (Gcl.Variable (Identifier "m" 1 0))) (Gcl.Indexing (Identifier "a" 3 0) (Gcl.BinaryOperation Gcl.Minus (Gcl.Variable (Identifier "m" 1 0)) (IntegerLiteral 1))))),Path.Assign (Identifier "m" 1 0) (Gcl.BinaryOperation Gcl.Minus (Gcl.Variable (Identifier "m" 1 0)) (IntegerLiteral 1)),Path.Assert (Gcl.BoolLiteral False)]
 
 hspecProgress :: Spec -> IO ()
 hspecProgress spec =

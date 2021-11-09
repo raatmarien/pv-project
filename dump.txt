@@ -1,17 +1,1 @@
-(declare-const za!1 Int)
-(declare-const a!0 (Array Int Int))
-(assert (not (=> (and (>= za!1 0) (>= za!1 4))
-         (=> (< 0 za!1)
-             (=> (< 0 (- za!1 1))
-                 (=> (not (< (select a!0 (- za!1 1))
-                             (select a!0 (- (- za!1 1) 1))))
-                     (=> (< 0 (- (- za!1 1) 1))
-                         (=> (not (< (select a!0 (- (- za!1 1) 1))
-                                     (select a!0 (- (- (- za!1 1) 1) 1))))
-                             (=> (< 0 (- (- (- za!1 1) 1) 1))
-                                 (=> (not (< (select a!0 (- (- (- za!1 1) 1) 1))
-                                             (select a!0
-                                                     (- (- (- (- za!1 1) 1) 1)
-                                                        1))))
-                                     (and false true)))))))))))
-(check-sat)
+[Declaration (Identifier "a" 3 0) (AType PTInt),Declaration (Identifier "b" 3 0) (AType PTInt),Assume (BinaryOperation && (BinaryOperation >= (ArrayLength (Identifier "a" 3 0)) (IntegerLiteral 0)) (BinaryOperation >= (ArrayLength (Identifier "a" 3 0)) (IntegerLiteral 4))),Declaration (Identifier "k" 2 0) (PType PTInt),Assign (Identifier "k" 2 0) (IntegerLiteral 0),Assume (BinaryOperation < (Variable (Identifier "k" 2 0)) (ArrayLength (Identifier "a" 3 0))),Declaration (Identifier "m" 1 0) (PType PTInt),Declaration (Identifier "tmp" 1 0) (PType PTInt),Assign (Identifier "m" 1 0) (BinaryOperation - (ArrayLength (Identifier "a" 3 0)) (IntegerLiteral 1)),Assume (BinaryOperation < (Variable (Identifier "k" 2 0)) (Variable (Identifier "m" 1 0))),Assume (Negation (BinaryOperation < (Indexing (Identifier "a" 3 0) (Variable (Identifier "m" 1 0))) (Indexing (Identifier "a" 3 0) (BinaryOperation - (Variable (Identifier "m" 1 0)) (IntegerLiteral 1))))),Assign (Identifier "m" 1 0) (BinaryOperation - (Variable (Identifier "m" 1 0)) (IntegerLiteral 1)),Assume (BinaryOperation < (Variable (Identifier "k" 2 0)) (Variable (Identifier "m" 1 0))),Assume (Negation (BinaryOperation < (Indexing (Identifier "a" 3 0) (Variable (Identifier "m" 1 0))) (Indexing (Identifier "a" 3 0) (BinaryOperation - (Variable (Identifier "m" 1 0)) (IntegerLiteral 1))))),Assign (Identifier "m" 1 0) (BinaryOperation - (Variable (Identifier "m" 1 0)) (IntegerLiteral 1)),Assume (BinaryOperation < (Variable (Identifier "k" 2 0)) (Variable (Identifier "m" 1 0))),Assume (Negation (BinaryOperation < (Indexing (Identifier "a" 3 0) (Variable (Identifier "m" 1 0))) (Indexing (Identifier "a" 3 0) (BinaryOperation - (Variable (Identifier "m" 1 0)) (IntegerLiteral 1))))),Assign (Identifier "m" 1 0) (BinaryOperation - (Variable (Identifier "m" 1 0)) (IntegerLiteral 1)),Assert (BoolLiteral False)]

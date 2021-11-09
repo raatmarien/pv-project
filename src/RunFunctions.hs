@@ -1,3 +1,8 @@
+{-# OPTIONS_GHC
+  -Wno-unused-top-binds
+  -Wno-unused-imports
+#-}
+
 module RunFunctions where
 
 import BoundedVerification (boundedVerification, parse)

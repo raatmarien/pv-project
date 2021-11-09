@@ -43,12 +43,13 @@ type Z3Variable =
     (Z3Array {-current-}, Z3Array {-initial-}, PrimitiveType)
   )
 
-newtype Z3Primitive = Z3Primitive AST
+newtype Z3Primitive = Z3Primitive AST deriving (Show)
 
 data Z3Array =
   Z3Array
     AST
     AST -- ^ length
+  deriving (Show)
 
 type SymbolicExpression = ReaderT Environment Z3 AST
 
@@ -61,15 +62,8 @@ data Value =
 
 {-# noinline counterExample #-}
 counterExample ::
-  [Path.Statement] -> Maybe (HashMap Identifier Value)
+  [Path.Statement] -> IO (Maybe (HashMap Identifier Value))
 counterExample statements =
-  unsafePerformIO $ do
-    x <- evalZ3 $ do 
-        (z3Statements, Environment environment) <- symbolifyPath statements
-        astToString =<< mkNot z3Statements
-
-    writeFile "dump.txt" x
-
     evalZ3 $ do
       (z3Statements, Environment environment) <- symbolifyPath statements
       assert =<< mkNot z3Statements

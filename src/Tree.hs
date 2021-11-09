@@ -116,17 +116,17 @@ prunePathByFeasibility ::
   [Path.Statement] ->
   Tree [Path.Statement] ->
   Maybe ([Path.Statement], Tree [Path.Statement])
-prunePathByFeasibility statements rest@(Bifurcation _ _ _ _) =
-  case
-    counterExample
-      (
-        filter isNotAssert statements
-        <>
-        [Path.Assert $ BoolLiteral $ False]
-      )
-  of
-    Nothing -> Nothing
-    _ -> (statements,) <$> pruneByFeasibility rest
+prunePathByFeasibility statements rest@(Bifurcation _ _ _ _) = undefined
+  -- case
+  --   counterExample
+  --     (
+  --       filter isNotAssert statements
+  --       <>
+  --       [Path.Assert $ BoolLiteral $ False]
+  --     )
+  -- of
+  --   Nothing -> Nothing
+  --   _ -> (statements,) <$> pruneByFeasibility rest
   where
     isNotAssert (Path.Assert _) = False
     isNotAssert _ = True
