@@ -32,5 +32,4 @@ boundedVerification searchDepth prune =
   Tree.statementTree .
   Gcl.addArrayAssignAssertions .
   Gcl.addIndexingAssertions .
-  Gcl.rename .
-  Gcl.makeHeap
+  Gcl.rename

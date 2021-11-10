@@ -12,6 +12,7 @@ import GCLParser.GCLDatatype
   )
 import Control.Lens
 import Data.Data.Lens (template)
+import qualified Data.List.NonEmpty as N
 import Data.Sequence qualified as S
 import Data.Data (Data)
 import Std hiding (Type)
@@ -52,9 +53,11 @@ deriving instance Data Type
 deriving instance Data BinOp
 deriving instance Data PrimitiveType
 
+
 fromParseResult :: Parse.Program -> [Statement]
 fromParseResult (Parse.Program _name input output programParsed) =
   either (error . toText) id $
+  fmap makeHeap $
   fmap parametersToDeclarations $
   fromParsedProgram programParsed
   where
@@ -62,11 +65,21 @@ fromParseResult (Parse.Program _name input output programParsed) =
     parametersToDeclarations =
       case fromParsedDeclarations (input <> output) of
         Nothing -> id
-        Just d -> pure . Declarations d
+        Just d -> pure . Declarations d . prependHeapAssumptions d
+
+    prependHeapAssumptions :: NonEmpty (Identifier, Type) -> [Statement] -> [Statement]
+    prependHeapAssumptions d xs = map (heapHyp . fst) (N.filter ((== RefType) . snd) d) ++ xs
+
+    heapHyp identifier = Assume (BinaryOperation And
+      (BinaryOperation LessThan (Variable identifier) (ArrayLength heapId))
+      (BinaryOperation LessThanEqual (IntegerLiteral (-1)) (Variable identifier)))
 
 
 heapId :: Identifier
 heapId = Identifier "heap" (-2) 0
+
+stringToId :: String -> Identifier
+stringToId identifier = Identifier identifier (-1) 0
 
 
 fromParsedProgram :: Parse.Stmt -> Either String [Statement]
@@ -148,12 +161,12 @@ fromParsedExpression =
     Parse.RepBy {} -> Left "no `RepBy`s"
     Parse.Cond {} -> Left "no `Cond`s"
     Parse.NewStore {} -> Left "NewStore should be intercepted in fromParsedProgram"
-    Parse.Dereference identifier -> 
+    Parse.Dereference identifier ->
       Indexing
         heapId
         <$> fromParsedExpression (Parse.Var identifier)
     Parse.Dereference _ -> Left "only dereference variables"
-    
+
 
 fromParsedDeclarations ::
   [Parse.VarDeclaration] -> Maybe (NonEmpty (Identifier, Type))
@@ -303,7 +316,9 @@ addIndexingAssertionsExpression =
 
 indexAssertion :: Identifier -> Expression -> Statement
 indexAssertion identifier index =
-  Assert (BinaryOperation LessThan index (ArrayLength identifier))
+  Assert (BinaryOperation And
+  (BinaryOperation LessThan index (ArrayLength identifier))
+  (BinaryOperation LessThanEqual (IntegerLiteral 0) index))
 
 addArrayAssignAssertions :: [Statement] -> [Statement]
 addArrayAssignAssertions [] = []

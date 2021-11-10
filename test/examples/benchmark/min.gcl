@@ -11,7 +11,7 @@ min(a:[]int, x:ref, u:ref | m:ref) {
          && ~(x == null)
          && (forall i:: 0<=i && i<#a ==> a[i]>0) ;
   var k:int {
-     k := 0 ;
+     k := 1 ;
      while k<#a do {
         u := new(a[k]) ;
         if k=1 then { m := u } else { skip } ;
