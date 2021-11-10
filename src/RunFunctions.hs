@@ -66,6 +66,8 @@ runMutateProgram :: FilePath -> Integer -> Integer -> Bool -> IO ()
 runMutateProgram program n k prune = do
   result <- withMutations program n k prune
   print result
+  print $ length $ filter (/= Nothing) result
+  print $ length result
 
 getPathsAmount :: FilePath -> Integer -> Integer -> Bool -> IO Int
 getPathsAmount file n k prune = do
