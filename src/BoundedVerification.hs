@@ -33,3 +33,22 @@ boundedVerification searchDepth prune =
   Gcl.addArrayAssignAssertions .
   Gcl.addIndexingAssertions .
   Gcl.rename
+
+verificationLeavesAmount ::
+  Integer ->
+  Bool ->
+  [Gcl.Statement] ->
+  Int
+verificationLeavesAmount searchDepth prune =
+  length .
+  Tree.leaves .
+  (if prune then (fromMaybe Empty .
+                  Tree.pruneByFeasibility)
+   else id) .
+  Tree.pathsTree .
+  fromMaybe Empty .
+  Tree.pruneByLength searchDepth .
+  Tree.statementTree .
+  Gcl.addArrayAssignAssertions .
+  Gcl.addIndexingAssertions .
+  Gcl.rename

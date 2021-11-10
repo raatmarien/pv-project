@@ -1,6 +1,6 @@
 module RunFunctions where
 
-import BoundedVerification (boundedVerification, parse)
+import BoundedVerification (boundedVerification, parse, verificationLeavesAmount)
 import GCLUtils (mutateProgram)
 import Gcl (Type (PType), PrimitiveType (PTBool), Expression (IntegerLiteral), Identifier)
 import Gcl qualified
@@ -66,3 +66,10 @@ runMutateProgram :: FilePath -> Integer -> Integer -> Bool -> IO ()
 runMutateProgram program n k prune = do
   result <- withMutations program n k prune
   print result
+
+getPathsAmount :: FilePath -> Integer -> Integer -> Bool -> IO Int
+getPathsAmount file n k prune = do
+  content <- readFileBS file
+  let parsed = Gcl.fromParseResult $ parse $ decodeUtf8 content
+      withN = Gcl.instantiateN (IntegerLiteral n) parsed
+  return $ verificationLeavesAmount k prune withN
