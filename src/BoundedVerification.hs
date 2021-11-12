@@ -4,6 +4,7 @@ import Gcl (Identifier)
 import Gcl qualified
 import Tree (Tree (Empty))
 import Tree qualified
+import Path qualified
 import SymbolicExecution (Value)
 import SymbolicExecution qualified
 
@@ -20,8 +21,16 @@ boundedVerification ::
   [Gcl.Statement] ->
   Maybe (HashMap Identifier Value)
 boundedVerification searchDepth prune =
+  fmap fst . boundedVerificationWithPath searchDepth prune
+
+boundedVerificationWithPath ::
+  Integer ->
+  Bool ->
+  [Gcl.Statement] ->
+  Maybe (HashMap Identifier Value, [Path.Statement])
+boundedVerificationWithPath searchDepth prune =
   foldr (<|>) Nothing . -- short circuit
-  fmap SymbolicExecution.counterExample .
+  fmap (\p -> (,p) <$> SymbolicExecution.counterExample p) .
   Tree.leaves .
   (if prune then (fromMaybe Empty .
                   Tree.pruneByFeasibility)

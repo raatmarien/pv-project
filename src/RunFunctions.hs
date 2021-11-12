@@ -4,7 +4,7 @@
 
 module RunFunctions where
 
-import BoundedVerification (boundedVerification, parse, verificationLeavesAmount)
+import BoundedVerification (boundedVerificationWithPath, boundedVerification, parse, verificationLeavesAmount)
 import GCLUtils (mutateProgram)
 import Gcl (Type (PType), PrimitiveType (PTBool), Expression (IntegerLiteral), Identifier)
 import Gcl qualified
@@ -18,23 +18,23 @@ import Criterion.Main
 import Data.Sequence qualified as S
 import Std
 
-withoutMutations ::
+verifyProgram ::
   FilePath ->
   Integer ->
   Integer ->
   Bool ->
-  IO (Maybe (HashMap Identifier Value))
-withoutMutations file nSubstitute searchDepth prune = do
+  IO ()
+verifyProgram file nSubstitute searchDepth prune = do
   content <- readFileUtf8 file
   let parsed = Gcl.fromParseResult $ parse $ content
       withN = Gcl.instantiateN (IntegerLiteral nSubstitute) parsed
-      result = boundedVerification searchDepth prune withN
+      result = boundedVerificationWithPath searchDepth prune withN
       pathsCount = verificationLeavesAmount searchDepth False withN
   putText "paths: "
   print pathsCount
   putText "of which identified as unfeasible: "
   print (pathsCount - verificationLeavesAmount searchDepth prune withN)
-  return result
+  pPrint result
 
 verificationBenchmark ::
   String ->
@@ -65,11 +65,6 @@ withMutations file nSubstitute searchDepth prune =
   fmap mutateProgram $
   fmap parse $
   readFileUtf8 file
-
-verifyProgram :: FilePath -> Integer -> Integer -> Bool -> IO ()
-verifyProgram program n k prune = do
-  result <- withoutMutations program n k prune
-  pPrint result
 
 runMutateProgram :: FilePath -> Integer -> Integer -> Bool -> IO ()
 runMutateProgram program n k prune = do
