@@ -70,9 +70,8 @@ fromParseResult (Parse.Program _name input output programParsed) =
     prependHeapAssumptions :: NonEmpty (Identifier, Type) -> [Statement] -> [Statement]
     prependHeapAssumptions d xs = map (heapHyp . fst) (N.filter ((== RefType) . snd) d) ++ xs
 
-    heapHyp identifier = Assume (BinaryOperation And(BinaryOperation And
-      (BinaryOperation LessThan (ArrayLength heapId) (IntegerLiteral 5))
-      (BinaryOperation LessThan (Variable identifier) (ArrayLength heapId)))
+    heapHyp identifier = Assume (BinaryOperation And
+      (BinaryOperation LessThan (Variable identifier) (ArrayLength heapId))
       (BinaryOperation LessThanEqual (IntegerLiteral (-1)) (Variable identifier)))
 
 

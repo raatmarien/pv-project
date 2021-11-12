@@ -82,7 +82,7 @@ getPathsAmount file n k prune = do
 
 r :: FilePath -> Integer -> Integer -> IO _
 r file searchDepth nSubstitute =
-  (fmap) (boundedVerification searchDepth True) $
+  (fmap) (boundedVerificationWithoutCounterExample searchDepth True) $
   (fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
   (fmap) Gcl.fromParseResult $
   -- (fmap) snd $
