@@ -3,7 +3,7 @@ module Tree where
 import Gcl (Expression (Negation), Expression (BoolLiteral), renameUnfolding)
 import Gcl qualified
 import Path qualified
-import SymbolicExecution (counterExample)
+import SymbolicExecution (verify)
 
 import Data.Sequence qualified as S
 import Std hiding (Type)
@@ -119,16 +119,15 @@ prunePathByFeasibility ::
   Tree [Path.Statement] ->
   Maybe ([Path.Statement], Tree [Path.Statement])
 prunePathByFeasibility statements rest@(Bifurcation _ _ _ _) =
-  case
-    counterExample
+  if
+    verify
       (
         filter isNotAssert statements
         <>
         [Path.Assert $ BoolLiteral $ False]
       )
-  of
-    Nothing -> Nothing
-    _ -> (statements,) <$> pruneByFeasibility rest
+  then Nothing
+  else (statements,) <$> pruneByFeasibility rest
   where
     isNotAssert (Path.Assert _) = False
     isNotAssert _ = True

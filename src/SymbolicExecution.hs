@@ -59,8 +59,21 @@ data Value =
   BoolArray [Bool]
   deriving (Show, Eq)
 
-counterExample ::
-  [Path.Statement] -> Maybe (HashMap Identifier Value)
+verify :: [Path.Statement] -> Bool
+verify statements =
+  unsafePerformIO $
+  evalZ3 $
+  do
+    (z3Statements, _environment) <- symbolifyPath statements
+    assert =<< mkNot z3Statements
+    parseZ3Result <$> check
+  where
+    parseZ3Result :: Result -> Bool
+    parseZ3Result Sat = False
+    parseZ3Result Unsat = True
+    parseZ3Result Undef = error "Is Z3's result ever undefined?"
+
+counterExample :: [Path.Statement] -> Maybe (HashMap Identifier Value)
 counterExample statements =
   unsafePerformIO $
   evalZ3 $
