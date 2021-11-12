@@ -57,7 +57,4 @@ main :: IO ()
 main = do
   options <- (unwrapRecord "Bounded verification tool"
               :: IO (Options Unwrapped))
-  if benchmark options
-    then benchmarkProgram options
-    else runProgram options
-
+  print =<< r (program options) (k options) (n options)

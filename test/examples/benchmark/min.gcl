@@ -14,7 +14,7 @@ min(a:[]int, x:ref, u:ref | m:ref) {
      k := 0 ;
      while k<#a do {
         u := new(a[k]) ;
-        if k=0 then { m := u } else { skip } ;
+        if k= then { m := u } else { skip } ;
         if u.val < m.val then { m:=u } else { skip } ;
         if ~(m == null) then { x.val := m.val + 1 }
                         else { skip } ;

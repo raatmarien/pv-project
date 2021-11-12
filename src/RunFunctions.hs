@@ -4,17 +4,18 @@
 
 module RunFunctions where
 
-import BoundedVerification (boundedVerification, parse, verificationLeavesAmount)
+import BoundedVerification (boundedVerification, boundedVerificationWithoutCounterExample, parse, verificationLeavesAmount)
 import GCLUtils (mutateProgram)
 import Gcl (Type (PType), PrimitiveType (PTBool), Expression (IntegerLiteral), Identifier)
 import Gcl qualified
 import Path qualified
 import Tree (Tree (Empty))
 import Tree qualified
-import SymbolicExecution (Value, counterExample, symbolifyPath)
+import SymbolicExecution (Value, counterExample, verify, symbolifyPath)
 
 import Criterion.Main
 import Data.Sequence qualified as S
+import Relude.Unsafe qualified as U
 import Std
 
 withoutMutations ::
@@ -78,3 +79,15 @@ getPathsAmount file n k prune = do
   let parsed = Gcl.fromParseResult $ parse $ content
       withN = Gcl.instantiateN (IntegerLiteral n) parsed
   return $ verificationLeavesAmount k prune withN
+
+r :: FilePath -> Integer -> Integer -> IO _
+r file searchDepth nSubstitute =
+  (fmap) (boundedVerification searchDepth True) $
+  (fmap) (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
+  (fmap) Gcl.fromParseResult $
+  -- (fmap) snd $
+  -- fmap (\[_,t0,t1,t2,_,_,_,_,t3,t4,t5,_,_,_,t6,t7,t8] -> [t0,t1,t2,t3,t4,t5,t6,t7,t8]) $
+  -- fmap (\[_,_,_,_,_,_,_,_,_,_,_,_,t0,t1,t2,_,_,_,_,_,_,t3,t4,_] -> [t0,t1,t2,t3,t4]) $
+  -- fmap mutateProgram $
+  fmap parse $
+  readFileUtf8 file

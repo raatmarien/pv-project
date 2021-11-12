@@ -52,3 +52,23 @@ verificationLeavesAmount searchDepth prune =
   Gcl.addArrayAssignAssertions .
   Gcl.addIndexingAssertions .
   Gcl.rename
+
+boundedVerificationWithoutCounterExample ::
+  Integer ->
+  Bool ->
+  [Gcl.Statement] ->
+  Bool
+boundedVerificationWithoutCounterExample searchDepth prune =
+  and . -- short circuit
+  fmap SymbolicExecution.verify .
+  Tree.leaves .
+  (if prune then (fromMaybe Empty .
+                  Tree.pruneByFeasibility)
+   else id) .
+  Tree.pathsTree .
+  fromMaybe Empty .
+  Tree.pruneByLength searchDepth .
+  Tree.statementTree .
+  Gcl.addArrayAssignAssertions .
+  Gcl.addIndexingAssertions .
+  Gcl.rename
