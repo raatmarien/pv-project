@@ -1,3 +1,7 @@
+{-# OPTIONS_GHC
+  -Wno-all
+#-}
+
 module RunFunctions where
 
 import BoundedVerification (boundedVerification, parse, verificationLeavesAmount)

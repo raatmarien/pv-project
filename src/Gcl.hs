@@ -165,7 +165,6 @@ fromParsedExpression =
       Indexing
         heapId
         <$> fromParsedExpression (Parse.Var identifier)
-    Parse.Dereference _ -> Left "only dereference variables"
 
 
 fromParsedDeclarations ::
