@@ -96,7 +96,7 @@ prune prunePath =
           Just (Path statements1 rest1)
         (Nothing, Nothing) -> Nothing
 
-pathsTree :: Tree Path.Statement -> Tree [Path.Statement]
+pathsTree :: Tree a -> Tree [a]
 pathsTree =
   \case
     Empty -> Empty

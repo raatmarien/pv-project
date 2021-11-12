@@ -50,7 +50,7 @@ stack run -- --program test/examples/benchmark/memberOf.gcl --n 10 --k 30 --benc
 
 Samuel: Initial implementation of wlp rules, conversion to z3, implement pointers, optionals in paper, contribute to abstract and approach in paper.
 
-Philipp: Create datastructures, implement pruning, implement pointers
+Philipp: define data types for ASTs and trees, implement renaming, implement pruning by feasibility, implement pointers, investigate Z3 segmentation fault
 
 Mark: Arrays verification, related works in paper, testing
 
