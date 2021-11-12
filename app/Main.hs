@@ -38,15 +38,15 @@ benchmarkProgram options = do
       getPathsInspected (n', k', prune) = do
         am <- getPathsAmount (program options) n' k' prune
         return [show n', show k', show prune, show am]
-      benchOptions = [(n', k', prune) | n' <- [2..(n options)]
-                                      , k' <- [10, 20..(k options)]
+      benchOptions = [(n', k', prune) | n' <- [2..10]
+                                      , k' <- [(k options)]
                                       , prune <- [True, False]]
       createCsv :: [[String]] -> String
       createCsv = L.unlines . map (L.intercalate ",")
   benchmarks <- mapM createVerificationBenchmark benchOptions
-  pathsInspected <- mapM getPathsInspected benchOptions
-  let csvText = createCsv $ ["n", "k", "prune", "paths"]:pathsInspected
-  writeFileUtf8 "paths-inspected.csv" csvText
+  -- pathsInspected <- mapM getPathsInspected benchOptions
+  -- let csvText = createCsv $ ["n", "k", "prune", "paths"]:pathsInspected
+  -- writeFileUtf8 "paths-inspected.csv" csvText
   let config = defaultConfig { csvFile = Just "benchmarkoutput.csv" }
       newMain = defaultMainWith config [
         bgroup "verification" benchmarks
