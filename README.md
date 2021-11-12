@@ -48,7 +48,7 @@ stack run -- --program test/examples/benchmark/memberOf.gcl --n 10 --k 30 --benc
 
 ## Work done
 
-Samuel: Implement z3 connection, implement wlp, implement pointers
+Samuel: Initial implementation of wlp rules, conversion to z3, implement pointers, optionals in paper, contribute to abstract and approach in paper.
 
 Philipp: Create datastructures, implement pruning, implement pointers
 
