@@ -61,6 +61,7 @@ library
     , criterion
     , lens
     , relude
+    , safe-exceptions
     , unordered-containers
     , z3
   default-language: Haskell2010

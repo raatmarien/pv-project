@@ -24,8 +24,8 @@ withoutMutations ::
   Bool ->
   IO (Maybe (HashMap Identifier Value))
 withoutMutations file nSubstitute searchDepth prune = do
-  content <- readFileBS file
-  let parsed = Gcl.fromParseResult $ parse $ decodeUtf8 content
+  content <- readFileUtf8 file
+  let parsed = Gcl.fromParseResult $ parse $ content
       withN = Gcl.instantiateN (IntegerLiteral nSubstitute) parsed
       result = boundedVerification searchDepth prune withN
   return result
@@ -38,8 +38,8 @@ verificationBenchmark ::
   Bool ->
   IO Benchmark
 verificationBenchmark name file nSubstitute searchDepth prune = do
-  content <- readFileBS file
-  let parsed = Gcl.fromParseResult $ parse $ decodeUtf8 content
+  content <- readFileUtf8 file
+  let parsed = Gcl.fromParseResult $ parse $ content
       withN = Gcl.instantiateN (IntegerLiteral nSubstitute) parsed
       resultF = \n -> isJust (boundedVerification searchDepth prune n)
       benchmarkable = nf resultF withN
@@ -58,8 +58,7 @@ withMutations file nSubstitute searchDepth prune =
   (fmap . fmap) snd $
   fmap mutateProgram $
   fmap parse $
-  fmap decodeUtf8 $
-  readFileBS file
+  readFileUtf8 file
 
 verifyProgram :: FilePath -> Integer -> Integer -> Bool -> IO ()
 verifyProgram program n k prune = do
@@ -75,7 +74,7 @@ runMutateProgram program n k prune = do
 
 getPathsAmount :: FilePath -> Integer -> Integer -> Bool -> IO Int
 getPathsAmount file n k prune = do
-  content <- readFileBS file
-  let parsed = Gcl.fromParseResult $ parse $ decodeUtf8 content
+  content <- readFileUtf8 file
+  let parsed = Gcl.fromParseResult $ parse $ content
       withN = Gcl.instantiateN (IntegerLiteral n) parsed
   return $ verificationLeavesAmount k prune withN

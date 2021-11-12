@@ -55,6 +55,7 @@ library:
   - lens
   - GCLparser
   - criterion
+  - safe-exceptions
 
 executables:
   bounded-verification-exe:

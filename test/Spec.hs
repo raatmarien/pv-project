@@ -52,8 +52,7 @@ spec = do
         fmap (Gcl.instantiateN $ IntegerLiteral nSubstitute) $
         fmap Gcl.fromParseResult $
         fmap parse $
-        fmap decodeUtf8 $
-        readFileBS ("test/examples/" <> program)
+        readFileUtf8 ("test/examples/" <> program)
 
 renameTest :: Spec
 renameTest = describe "renaming" $ do
@@ -91,8 +90,7 @@ verifyMutations file nSubstitute searchDepth =
   (fmap . fmap) snd $
   fmap mutateProgram $
   fmap parse $
-  fmap decodeUtf8 $
-  readFileBS ("test/examples/" <> file)
+  readFileUtf8 ("test/examples/" <> file)
 
 
 -- -- $> (=<<) pPrintLightBg $ fmap (U.!! 5) $ (fmap . fmap) isRight $ verifyMutations "benchmark/bsort.gcl" 4 45
@@ -119,8 +117,7 @@ adHocTest =
   fmap (Gcl.instantiateN $ IntegerLiteral 3) $
   fmap Gcl.fromParseResult $
   fmap parse $
-  fmap decodeUtf8 $
-  readFileBS "test/examples/benchmark/divByN.gcl"
+  readFileUtf8 "test/examples/benchmark/divByN.gcl"
 
 -- -- $> adHocTest
 
@@ -131,8 +128,7 @@ printMutation =
   fmap (U.!! 0) $
   fmap mutateProgram $
   fmap parse $
-  fmap decodeUtf8 $
-  readFileBS ("test/examples/benchmark/bsort.gcl")
+  readFileUtf8 ("test/examples/benchmark/bsort.gcl")
 
 renamedCorrectly :: [Gcl.Statement] -> Bool
 renamedCorrectly
@@ -183,4 +179,4 @@ hspecProgress spec =
   evaluateSummary
     =<< runSpec spec (defaultConfig {configFormatter = Just progress})
 
--- $> hspecProgress spec
+-- -- $> hspecProgress spec

@@ -27,7 +27,7 @@ import Path qualified
 import Z3.Monad hiding (local)
 import Data.HashMap.Strict qualified as HM
 import System.IO.Unsafe (unsafePerformIO)
-import Std hiding (Type)
+import Std hiding (Type, assert)
 
 data Statement =
   Assert Expression |

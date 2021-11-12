@@ -46,7 +46,7 @@ benchmarkProgram options = do
   benchmarks <- mapM createVerificationBenchmark benchOptions
   pathsInspected <- mapM getPathsInspected benchOptions
   let csvText = createCsv $ ["n", "k", "prune", "paths"]:pathsInspected
-  writeFile "paths-inspected.csv" csvText 
+  writeFileUtf8 "paths-inspected.csv" csvText
   let config = defaultConfig { csvFile = Just "benchmarkoutput.csv" }
       newMain = defaultMainWith config [
         bgroup "verification" benchmarks
